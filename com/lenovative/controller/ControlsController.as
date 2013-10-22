@@ -1,10 +1,12 @@
 package com.lenovative.controller
 {
+	import com.lenovative.model.Constants;
+	
 	import flash.events.EventDispatcher;
 	import flash.events.IEventDispatcher;
 	import flash.events.MouseEvent;
-	import flash.text.TextField;
 	
+	import net.ored.events.ORedEvent;
 	import net.ored.util.out.Out;
 	
 	public class ControlsController extends EventDispatcher
@@ -12,6 +14,8 @@ package com.lenovative.controller
 		// =================================================
 		// ================ Instance Vars
 		// =================================================
+
+		
 		public var view:Controls; 
 		
 		// =================================================
@@ -22,6 +26,7 @@ package com.lenovative.controller
 		// ================ Workers
 		// =================================================
 		public function init():void{
+			view.startBtn.buttonMode = true;
 			view.startBtn.addEventListener(MouseEvent.CLICK, _handleStartClick);
 			//view.tf.
 		}
@@ -29,6 +34,7 @@ package com.lenovative.controller
 		protected function _handleStartClick($me:MouseEvent):void
 		{
 			Out.status(this, "_handleStartClick");
+			dispatchEvent(new ORedEvent(Constants.START,{twHandle:view.tf.text}));
 		}
 		// =================================================
 		// ================ Handlers
@@ -50,7 +56,7 @@ package com.lenovative.controller
 		{
 			super(target);
 			view = new Controls();
-			
+			init();
 			
 		}
 	}

@@ -33,6 +33,10 @@ package net.ored.media
 		// =================================================
 		// ================ Callable
 		// =================================================
+		public function resize($w:Number, $h:Number):void{
+			vid.width = $w;
+			vid.height = $h;
+		}
 		public function takeSnapshot($w:Number, $h:Number):Bitmap{
 			//Out.status(this, "takeSnapshot");
 			
