@@ -11,7 +11,7 @@ package com.lenovative.model
 		// =================================================
 		private var _stageRef				:Stage;
 		private var _curPics				:Vector.<Bitmap>;
-		
+		private var _compositedImage		:Bitmap;
 		// =================================================
 		// ================ Singleton
 		// =================================================
@@ -22,7 +22,7 @@ package com.lenovative.model
 		// =================================================
 
 
-		public function reset():void{
+		public function flushBitmaps():void{
 			_curPics = null;
 			_curPics = new Vector.<Bitmap>();
 		}
@@ -57,5 +57,16 @@ package com.lenovative.model
 		{
 			_curPics = value;
 		}
+
+		public function get compositedImage():Bitmap
+		{
+			return _compositedImage;
+		}
+
+		public function set compositedImage(value:Bitmap):void
+		{
+			_compositedImage = value;
+		}
+
 	}
 }

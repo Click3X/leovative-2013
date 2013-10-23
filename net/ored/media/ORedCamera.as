@@ -2,16 +2,19 @@ package net.ored.media
 {
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
+	import flash.display.MovieClip;
 	import flash.display.PixelSnapping;
 	import flash.display.Sprite;
 	import flash.events.ActivityEvent;
 	import flash.events.EventDispatcher;
 	import flash.events.StatusEvent;
 	import flash.geom.Matrix;
+	import flash.geom.Rectangle;
 	import flash.media.Camera;
 	import flash.media.Video;
 	
 	import net.ored.events.ORedEvent;
+	import net.ored.util.ORedUtils;
 	import net.ored.util.out.Out;
 	
 	
@@ -29,27 +32,37 @@ package net.ored.media
 		private var vid		:Video;
 		private var _isAvailable :Boolean = true;
 		private var _aspectRatio	:Number;
+		
+		private var _liveArea:Sprite;
 
 		// =================================================
 		// ================ Callable
 		// =================================================
 		public function resize($w:Number, $h:Number):void{
-			vid.width = $w;
-			vid.height = $h;
+			Out.status(this,"resize");
+			Out.debug(this, "x: "+($w-$h)/2);
+			vid.width 			= $w;
+			vid.height 			= $h;
+			
+			_liveArea.width 	= $h;
+			_liveArea.height 	= $h;
+			_liveArea.x 		= ($w-$h)/2;
 		}
 		public function takeSnapshot($w:Number, $h:Number):Bitmap{
 			//Out.status(this, "takeSnapshot");
-			
-			var scale:Number = $w/_width;
+	
+			//var scale:Number = $w/_width;
 			var matrix:Matrix = new Matrix();
-			matrix.scale(scale, scale);
+			matrix.translate(- _liveArea.x, -_liveArea.y);
+			var rect:Rectangle = new Rectangle(0,0,_liveArea.width,_liveArea.height);
+			//matrix.scale(scale, scale);
 			
 			var bmd:BitmapData = new BitmapData($w, $h, true, 0xffffff);
-			bmd.draw(vid, matrix, null, null, null, true);//oc: last true for smoothing
+			bmd.draw(vid, matrix, null, null, rect, true);//oc: last true for smoothing
 			
 			var img:Bitmap = new Bitmap(bmd, PixelSnapping.AUTO,true);
 			
-			//view.addChild(img);
+			view.addChild(img);
 			return img;
 			
 		}
@@ -66,6 +79,10 @@ package net.ored.media
 			view.addChild(vid);    
 			cam.addEventListener(ActivityEvent.ACTIVITY, checkActivity, false, 0, true);
 			
+			//live area
+			_liveArea = ORedUtils.gimmeRectWithTransparency(_height,_height, 0x00ffff, .8);
+			_liveArea.x = (_width-_height)/2;
+			_view.addChild(_liveArea);
 		}
 		public function init():void{
 			Out.status(this, "init");
@@ -85,6 +102,8 @@ package net.ored.media
 				//oc: NOT YET, we still need user's permission!! isAvailable = true;
 				cam.addEventListener(StatusEvent.STATUS, _statusHandler); 
 			}
+			
+
 		}
 		// =================================================
 		// ================ Workers

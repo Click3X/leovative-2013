@@ -1,6 +1,7 @@
 package
 {
 	import com.greensock.TimelineLite;
+	import com.lenovative.controller.Compositor;
 	import com.lenovative.controller.ControlsController;
 	import com.lenovative.controller.StripScript;
 	import com.lenovative.model.Constants;
@@ -25,7 +26,6 @@ package
 		// =================================================
 		private var _m:Model;
 		private var _stripScript:StripScript;
-		
 		public var oredCamera:ORedCamera;
 		
 		private var _controls:ControlsController;
@@ -54,7 +54,7 @@ package
 				
 			//countdown
 			_stripScript = new StripScript();
-			
+			_stripScript.addEventListener(Constants.CAPTURE_BITMAP, _captureBitmap);
 			
 			//full screen button
 			var fsBtn:FSBtn = new FSBtn();
@@ -65,7 +65,7 @@ package
 		protected function _beginFilmStrip($e:ORedEvent):void
 		{
 			Out.status(this, "_beginFilmStrip");
-			
+			_stripScript.start();
 		}
 		// =================================================
 		// ================ Handlers
@@ -73,7 +73,6 @@ package
 		
 		protected function _enterFullScreen(event:MouseEvent):void
 		{
-			// TODO Auto-generated method stub
 			stage.displayState = StageDisplayState.FULL_SCREEN; 
 			oredCamera.resize(stage.fullScreenWidth, stage.fullScreenHeight);
 		}
@@ -81,6 +80,13 @@ package
 			Out.status(this, "debug");
 			Out.debug(this, "ORedCamera.view.x: "+oredCamera.view.x);
 			
+		}
+		protected function _captureBitmap($e:ORedEvent):void{
+			Out.status(this, "_captureBitmap: index: "+ $e.payload.index);
+			_m.curPics.push(oredCamera.takeSnapshot(stage.fullScreenWidth, stage.fullScreenHeight));
+			
+			//oc: now that we're on the last photo, create 4-up image 
+			if($e.payload.index == 3) _m.compositedImage = Compositor.getTiledImage(_m.curPics);
 		}
 		// =================================================
 		// ================ Getters / Setters
