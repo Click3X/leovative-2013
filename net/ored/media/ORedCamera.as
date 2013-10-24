@@ -1,8 +1,9 @@
 package net.ored.media
 {
+	import com.lenovative.model.Constants;
+	
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
-	import flash.display.MovieClip;
 	import flash.display.PixelSnapping;
 	import flash.display.Sprite;
 	import flash.events.ActivityEvent;
@@ -24,48 +25,70 @@ package net.ored.media
 		public static const USER_ACCEPTED_CAMERA	:String = "USER_ACCEPTED_CAMERA";
 		public static const CAMERA_IS_ACTIVATED		:String = "CAMERA_IS_ACTIVATED";
 		
-		private var _width	:Number;
-		private var _height	:Number;
+		private var _width			:Number;
+		private var _height			:Number;
 		
-		private var _view	:Sprite;
-		private var cam		:Camera;
-		private var vid		:Video;
-		private var _isAvailable :Boolean = true;
+		private var _view			:Sprite;
+		private var cam				:Camera;
+		private var vid				:Video;
+		private var _isAvailable 	:Boolean = true;
 		private var _aspectRatio	:Number;
 		
 		private var _liveArea:Sprite;
-
+		private var _scale:Number;
 		// =================================================
 		// ================ Callable
 		// =================================================
 		public function resize($w:Number, $h:Number):void{
 			Out.status(this,"resize");
-			Out.debug(this, "x: "+($w-$h)/2);
+			Out.debug(this, "_liveArea.x: "+($w-$h)/2);
 			vid.width 			= $w;
 			vid.height 			= $h;
+			
+			_width 				= $w;
+			_height 			= $h;
 			
 			_liveArea.width 	= $h;
 			_liveArea.height 	= $h;
 			_liveArea.x 		= ($w-$h)/2;
+			
+			_scale  			= Constants.SIDE_LENGTH/$h;
+			Out.debug(this, "scale: "+_scale);
 		}
+		
 		public function takeSnapshot($w:Number, $h:Number):Bitmap{
-			//Out.status(this, "takeSnapshot");
-	
-			//var scale:Number = $w/_width;
+			Out.status(this, "takeSnapshot");
+			
+			//crop using the matrix and cropRect
 			var matrix:Matrix = new Matrix();
 			matrix.translate(- _liveArea.x, -_liveArea.y);
-			var rect:Rectangle = new Rectangle(0,0,_liveArea.width,_liveArea.height);
-			//matrix.scale(scale, scale);
+			var cropSquare:Rectangle = new Rectangle(0,0,_liveArea.width,_liveArea.height);
 			
-			var bmd:BitmapData = new BitmapData($w, $h, true, 0xffffff);
-			bmd.draw(vid, matrix, null, null, rect, true);//oc: last true for smoothing
+			//scale down to the proper final cropped size
+			var scale:Number = Constants.SIDE_LENGTH/$h;
 			
-			var img:Bitmap = new Bitmap(bmd, PixelSnapping.AUTO,true);
+			var bmd:BitmapData = new BitmapData(_liveArea.width, _liveArea.height, false, Math.random() * 0xFFFFFF);
+			bmd.draw(vid, matrix, null, null, cropSquare, true);//oc: last true for smoothing
 			
-			view.addChild(img);
+			var img:Bitmap = new Bitmap(scaleBitmapData(bmd, scale), PixelSnapping.AUTO,true);
+			//img.y = 100;
+			//view.addChild(img);
 			return img;
 			
 		}
+		
+		private function scaleBitmapData(bitmapData:BitmapData, scale:Number):BitmapData {
+			scale 					= Math.abs(scale);
+			var width:int 			= (bitmapData.width * scale) || 1;
+			var height:int 			= (bitmapData.height * scale) || 1;
+			var transparent:Boolean = bitmapData.transparent;
+			var result:BitmapData 	= new BitmapData(width, height, transparent);
+			var matrix:Matrix 		= new Matrix();
+			matrix.scale(scale, scale);
+			result.draw(bitmapData, matrix);
+			return result;
+		}
+
 		
 		public function connectCamera():void {
 			Out.status(this, "connectCamera");
@@ -80,7 +103,7 @@ package net.ored.media
 			cam.addEventListener(ActivityEvent.ACTIVITY, checkActivity, false, 0, true);
 			
 			//live area
-			_liveArea = ORedUtils.gimmeRectWithTransparency(_height,_height, 0x00ffff, .8);
+			_liveArea = ORedUtils.gimmeRectWithTransparency(_height,_height, 0x00ffff, .2);
 			_liveArea.x = (_width-_height)/2;
 			_view.addChild(_liveArea);
 		}

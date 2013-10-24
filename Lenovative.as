@@ -1,12 +1,12 @@
 package
 {
-	import com.greensock.TimelineLite;
 	import com.lenovative.controller.Compositor;
 	import com.lenovative.controller.ControlsController;
 	import com.lenovative.controller.StripScript;
 	import com.lenovative.model.Constants;
 	import com.lenovative.model.Model;
 	
+	import flash.display.Bitmap;
 	import flash.display.Sprite;
 	import flash.display.StageAlign;
 	import flash.display.StageDisplayState;
@@ -49,6 +49,8 @@ package
 			
 			//controls
 			_controls = new ControlsController();
+			_controls.view.x = stage.stageWidth/2 - _controls.view.width/2;
+			_controls.view.y = stage.stageHeight - _controls.view.height;
 			_controls.addEventListener(Constants.START, _beginFilmStrip);
 			addChild(_controls.view);
 				
@@ -57,9 +59,7 @@ package
 			_stripScript.addEventListener(Constants.CAPTURE_BITMAP, _captureBitmap);
 			
 			//full screen button
-			var fsBtn:FSBtn = new FSBtn();
-			fsBtn.addEventListener(MouseEvent.CLICK, _enterFullScreen);
-			addChild(fsBtn);
+			_controls.view.fsBtn.addEventListener(MouseEvent.CLICK, _enterFullScreen);
 		}
 		
 		protected function _beginFilmStrip($e:ORedEvent):void
@@ -75,6 +75,10 @@ package
 		{
 			stage.displayState = StageDisplayState.FULL_SCREEN; 
 			oredCamera.resize(stage.fullScreenWidth, stage.fullScreenHeight);
+			oredCamera.connectCamera();
+			_controls.view.x = stage.fullScreenWidth/2 - _controls.view.width/2;
+			_controls.view.y = stage.fullScreenHeight - _controls.view.height;
+				
 		}
 		protected function _debug($e:MouseEvent):void{
 			Out.status(this, "debug");
@@ -83,10 +87,18 @@ package
 		}
 		protected function _captureBitmap($e:ORedEvent):void{
 			Out.status(this, "_captureBitmap: index: "+ $e.payload.index);
-			_m.curPics.push(oredCamera.takeSnapshot(stage.fullScreenWidth, stage.fullScreenHeight));
+			var img:Bitmap = oredCamera.takeSnapshot(stage.fullScreenWidth, stage.fullScreenHeight);
+			_m.curPics.push(img);
 			
 			//oc: now that we're on the last photo, create 4-up image 
-			if($e.payload.index == 3) _m.compositedImage = Compositor.getTiledImage(_m.curPics);
+			if($e.payload.index == 3) {
+				_m.compositedImage = Compositor.getTiledImage(_m.curPics);
+				//oc: make call with 
+					//_controls.view.tf.text; 
+					// Base64 encoded byte array 
+				
+			//	addChild(_m.compositedImage);
+			}
 		}
 		// =================================================
 		// ================ Getters / Setters

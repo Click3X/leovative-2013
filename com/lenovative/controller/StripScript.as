@@ -32,7 +32,7 @@ package com.lenovative.controller
 		private var _glowSprite	:Sprite;
 		
 		private var _timer		:Timer;
-		private const __INTERVAL:Number = 1000;
+		private const __INTERVAL:Number = 200;
 		private var _sequencer	:TimelineLite;
 		
 		
