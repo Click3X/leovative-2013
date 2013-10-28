@@ -8,7 +8,6 @@ package com.lenovative.controller
 	import flash.display.Sprite;
 	import flash.events.EventDispatcher;
 	
-	import net.ored.util.ORedUtils;
 	import net.ored.util.out.Out;
 	
 	public class Compositor extends EventDispatcher

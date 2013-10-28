@@ -4,6 +4,7 @@ package com.lenovative.controller
 	import com.greensock.TweenLite;
 	import com.greensock.plugins.AutoAlphaPlugin;
 	import com.greensock.plugins.TweenPlugin;
+	import com.lenovative.interfaces.IScreen;
 	import com.lenovative.model.Constants;
 	import com.lenovative.model.Model;
 	
@@ -18,12 +19,14 @@ package com.lenovative.controller
 	import net.ored.util.ORedUtils;
 	import net.ored.util.out.Out;
 	
-	public class StripScript extends EventDispatcher
+	public class CaptureScreen extends EventDispatcher implements IScreen
 	{
 		// =================================================
 		// ================ Instance Vars
 		// =================================================
 		private var _m:Model;
+		
+		public var view:Sprite;
 		
 		private const __MAX_PICS:int = 4; 
 		private var _counter	:TextField;
@@ -39,17 +42,9 @@ package com.lenovative.controller
 		// =================================================
 		// ================ Public
 		// =================================================
-
-
-		public function start():void{
-			Out.status(this, "start");
-			_reset();
-			_timer.start();
-		}
-		// =================================================
-		// ================ Workers
-		// =================================================
-		private function _init():void{
+		public function init():void{
+			
+			view = new Sprite();
 			
 			_timer = new Timer(__INTERVAL,3);
 			_timer.addEventListener(TimerEvent.TIMER, _onTimer);
@@ -61,13 +56,33 @@ package com.lenovative.controller
 			//_counter.visible			= false;
 			_counter.x 					= _m.stageRef.fullScreenWidth/2 - _counter.width/2;
 			_counter.y 					= _m.stageRef.fullScreenHeight/2 - _counter.height/2;
-			_m.stageRef.addChild(_counter);
+			view.addChild(_counter);
 			
 			_glowSprite = ORedUtils.gimmeRectWithTransparency(_m.stageRef.fullScreenWidth, _m.stageRef.fullScreenHeight,0xffffff, 1);
 			_glowSprite.visible = false;
-			_m.stageRef.addChild(_glowSprite);
+			view.addChild(_glowSprite);
 		
 		}
+
+
+		public function start():void{
+			Out.status(this, "start");
+			_reset();
+			_timer.start();
+		}
+		public function transitionIn():void{
+			Out.status(this, "transitionIn");
+		}
+		public function transitionOut():void{
+			Out.status(this, "transitionOut");
+		}
+		public function resize():void{
+			
+		}
+		
+		// =================================================
+		// ================ Workers
+		// =================================================
 		
 		protected function _onTimerComplete($e:TimerEvent):void
 		{
@@ -99,6 +114,9 @@ package com.lenovative.controller
 		// =================================================
 		private function _onComplete():void{
 			Out.status(this, "_onComplete");
+		}
+		private function _onTransitionOut():void{
+			
 		}
 		// =================================================
 		// ================ Getters / Setters
@@ -134,11 +152,10 @@ package com.lenovative.controller
 		// ================ Initialize
 		// =================================================
 
-		public function StripScript()
+		public function CaptureScreen()
 		{
 			_m = Model.getInstance();
 			TweenPlugin.activate([AutoAlphaPlugin]);
-			_init();
 		}
 	}
 }

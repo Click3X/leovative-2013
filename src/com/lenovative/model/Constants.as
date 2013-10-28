@@ -2,7 +2,9 @@ package com.lenovative.model
 {
 	public class Constants
 	{
-		public static const START:String = "startFilmStrip";
+		public static const START		:String = "start";
+		public static const CAPTURE		:String = "capture";
+		public static const FINISH		:String = "finish";
 		public static const CAPTURE_BITMAP:String = "captureBitmap";
 		
 		public static const SIDE_LENGTH	:Number = 130;
