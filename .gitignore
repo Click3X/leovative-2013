@@ -4,3 +4,8 @@
 */cache/*
 */cache/!index.html
 .DS_Store
+
+bin-debug
+.actionScriptProperties
+.project
+.settings/
