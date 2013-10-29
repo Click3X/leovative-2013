@@ -32,6 +32,7 @@ package com.lenovative.model
 		public function init($stage:Stage):void{
 			stageRef 	= $stage;
 			_screens 	= new Vector.<IScreen>();
+			_curPics 	= new Vector.<Bitmap>();
 		}
 
 		public function flushBitmaps():void{

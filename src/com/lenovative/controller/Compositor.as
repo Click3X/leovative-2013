@@ -60,8 +60,8 @@ package com.lenovative.controller
 			var bmd:BitmapData = new BitmapData(Constants.PHOTO_WIDTH, Constants.PHOTO_HEIGHT,true,Math.random() * 0xFFFFFF);
 			
 			//oc: debug
-			var m:Model = Model.getInstance();
-			m.stageRef.addChild(contactSheet);
+//			var m:Model = Model.getInstance();
+//			m.stageRef.addChild(contactSheet);
 			
 			bmd.draw(contactSheet);
 			var bitmap:Bitmap = new Bitmap(bmd);

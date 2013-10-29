@@ -15,5 +15,8 @@ package com.lenovative.model
 		public static const PHOTO_HEIGHT:Number = 360;
 		
 		public static const pic1Rect	:Array = [10, 10];
+		
+		public static const picOffX		:Number = 390; 
+		public static const picOffY		:Number = 320; 
 	}
 }

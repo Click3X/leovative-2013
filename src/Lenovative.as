@@ -13,6 +13,7 @@ package
 	import flash.display.StageAlign;
 	import flash.display.StageDisplayState;
 	import flash.display.StageScaleMode;
+	import flash.events.FullScreenEvent;
 	import flash.events.MouseEvent;
 	
 	import net.ored.events.ORedEvent;
@@ -36,7 +37,24 @@ package
 		// =================================================
 		// ================ Public
 		// =================================================
-		
+		protected function screenChange($e:ORedNavEvent):void{
+			Out.info(this, "screenChange: " +$e.screen);
+			switch($e.screen){
+				case Constants.START: 
+					oredCamera.view.visible = false;
+					_startScreen.transitionIn();
+					break;
+				case Constants.CAPTURE: 
+					oredCamera.view.visible = true;
+					_captureScreen.transitionIn();
+					break;
+				case Constants.FINISH:
+					_m.compositedImage 			= Compositor.getTiledImage(_m.curPics);
+					oredCamera.view.visible 	= false;
+					_finishScreen.transitionIn();
+					break;
+			}
+		}
 		// =================================================
 		// ================ Workers
 		// =================================================
@@ -45,8 +63,9 @@ package
 			oredCamera = new ORedCamera(stage.stageWidth,stage.stageHeight);
 			oredCamera.init();
 			oredCamera.connectCamera();
-			oredCamera.view.visible = false;
 			oredCamera.addEventListener(ORedCamera.USER_ACCEPTED_CAMERA, _startApp);
+			//oc: hide camera initially
+			oredCamera.view.visible = false;
 			addChildAt(oredCamera.view,0);
 		}
 		
@@ -56,7 +75,6 @@ package
 			//start screen
 			_startScreen = new StartScreen();
 			_startScreen.init();
-			_startScreen.addEventListener(Constants.START, _beginFilmStrip);
 			addChild(_startScreen.view);
 
 			//full screen button
@@ -76,14 +94,12 @@ package
 			//load screens into model
 			_m.screens.push(_startScreen);
 			_m.screens.push(_captureScreen);
-			_m.screens.push(_finishScreen);
+			_m.screens.push(_finishScreen);	
+			
+			//listen for screen change event
+			for each (var s:IScreen in _m.screens) s.addEventListener(ORedNavEvent.SCREEN_CHANGE, screenChange);
 		}
-		
-		protected function _beginFilmStrip($e:ORedEvent):void
-		{
-			Out.status(this, "_beginFilmStrip");
-			_captureScreen.start();
-		}
+
 		// =================================================
 		// ================ Handlers
 		// =================================================
@@ -91,35 +107,21 @@ package
 			//start the app.
 			_startScreen.transitionIn();
 		}
-		protected function _screenChange($e:ORedNavEvent):void{
-			switch($e.screen){
-				case Constants.START: 
-					_startScreen.transitionIn();
-					break;
-				case Constants.CAPTURE: 
-					_captureScreen.start();
-					break;
-				case Constants.FINISH:
-					_finishScreen.transitionIn();
-					break;
-			}
-		}
+
 		protected function _enterFullScreen(event:MouseEvent):void
 		{
 			stage.displayState = StageDisplayState.FULL_SCREEN; 
+		}
+		
+		protected function _onFullScreenChange($e:FullScreenEvent):void
+		{
+			Out.status(this, "_onFullScreenChange: "+ $e.fullScreen);
 			oredCamera.resize(stage.fullScreenWidth, stage.fullScreenHeight);
 			oredCamera.connectCamera();
-				
-			for(var e:* in _m.screenIds){
-				IScreen(_m.getScreenById(e)).resize();
-					
-			}
-		}
-		protected function _debug($e:MouseEvent):void{
-			Out.status(this, "debug");
-			Out.debug(this, "ORedCamera.view.x: "+oredCamera.view.x);
 			
-		}
+			for each(var s:IScreen in _m.screens) s.resize();
+		}	
+
 		protected function _captureBitmap($e:ORedEvent):void{
 			Out.status(this, "_captureBitmap: index: "+ $e.payload.index);
 			var img:Bitmap = oredCamera.takeSnapshot(stage.fullScreenWidth, stage.fullScreenHeight);
@@ -127,7 +129,7 @@ package
 			
 			//oc: now that we're on the last photo, create 4-up image 
 			if($e.payload.index == 3) {
-				_m.compositedImage = Compositor.getTiledImage(_m.curPics);
+				
 				//oc: make call with 
 					//_controls.view.tf.text; 
 					// Base64 encoded byte array 
@@ -152,9 +154,10 @@ package
 			ORedUtils.turnOutOn();
 			Out.info(this, "Hello Lenovative");
 			
-			//fix stage
+			//config stage
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			stage.align		= StageAlign.TOP_LEFT;
+			stage.addEventListener(FullScreenEvent.FULL_SCREEN, _onFullScreenChange);
 			
 			//model
 			_m 				= Model.getInstance();
@@ -165,7 +168,7 @@ package
 			_createCamera();
 
 		}
-		
+	
 
 
 	}

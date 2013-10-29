@@ -8,5 +8,6 @@ package com.lenovative.interfaces
 		function transitionIn():void;
 		function transitionOut():void;
 		function resize():void;
+		function reset():void;
 	}
 }

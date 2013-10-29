@@ -1,8 +1,6 @@
 package com.lenovative.controller
 {
 	import com.greensock.TweenLite;
-	import com.greensock.easing.Back;
-	import com.greensock.easing.Bounce;
 	import com.greensock.easing.Cubic;
 	import com.lenovative.interfaces.IScreen;
 	import com.lenovative.model.Constants;
@@ -12,7 +10,6 @@ package com.lenovative.controller
 	import flash.events.IEventDispatcher;
 	import flash.events.MouseEvent;
 	
-	import net.ored.events.ORedEvent;
 	import net.ored.events.ORedNavEvent;
 	import net.ored.util.out.Out;
 	
@@ -40,22 +37,12 @@ package com.lenovative.controller
 		}
 		public function transitionIn():void{
 			Out.status(this, "transitionIn");
-			TweenLite.from(view,.7,{x:_m.stageRef.fullScreenWidth+view.width, autoAlpha:1, ease:Cubic.easeOut});
+			TweenLite.from(view,.7,{x:tweenFromX, autoAlpha:1, ease:Cubic.easeOut});
 		}
 		public function transitionOut():void{
 			Out.status(this, "transitionOut");
-			TweenLite.to(view,.7,{x:_m.stageRef.fullScreenWidth+view.width, autoAlpha:1, ease:Cubic.easeOut, onComplete:_onTransitionOut});
+			TweenLite.to(view,.7,{x:tweenFromX, autoAlpha:1, ease:Cubic.easeOut, onComplete:_onTransitionOut});
 		
-		}
-		public function resize():void{
-			if(_m.isFullScreen()){
-				view.x = _m.stageRef.fullScreenWidth/2 - view.width/2;
-				view.y = _m.stageRef.fullScreenHeight - view.height;
-			}else{
-				view.x = _m.stageRef.stageWidth/2 - view.width/2;
-				view.y = _m.stageRef.stageHeight/2 - view.height;
-				
-			}
 		}
 		// =================================================
 		// ================ Workers
@@ -74,16 +61,34 @@ package com.lenovative.controller
 		}
 		private function _onTransitionOut():void{
 			_m.twitterHandle = view.tf.text;
+			view.visible = false;
 			dispatchEvent(new ORedNavEvent(Constants.CAPTURE));
 			
 		}
 		// =================================================
 		// ================ Getters / Setters
 		// =================================================
-		
+		private function get tweenFromX():Number{
+			var x:Number = _m.isFullScreen() ? _m.stageRef.fullScreenWidth : _m.stageRef.stageWidth;
+			return x + view.width;
+		}
 		// =================================================
 		// ================ Core Handler
 		// =================================================
+		public function resize():void{
+			if(_m.isFullScreen()){
+				view.x = _m.stageRef.fullScreenWidth/2 - view.width/2;
+				view.y = _m.stageRef.fullScreenHeight/2 - view.height;
+			}else{
+				view.x = _m.stageRef.stageWidth/2 - view.width/2;
+				view.y = _m.stageRef.stageHeight/2 - view.height;
+				
+			}
+		}
+		public function reset():void{
+			view.visible = false;
+			resize();
+		}
 		// =================================================
 		// ================ Constructor
 		// =================================================

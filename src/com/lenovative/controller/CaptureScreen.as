@@ -2,6 +2,7 @@ package com.lenovative.controller
 {
 	import com.greensock.TimelineLite;
 	import com.greensock.TweenLite;
+	import com.greensock.easing.Cubic;
 	import com.greensock.plugins.AutoAlphaPlugin;
 	import com.greensock.plugins.TweenPlugin;
 	import com.lenovative.interfaces.IScreen;
@@ -12,10 +13,13 @@ package com.lenovative.controller
 	import flash.events.EventDispatcher;
 	import flash.events.TimerEvent;
 	import flash.text.TextField;
+	import flash.text.TextFieldAutoSize;
 	import flash.text.TextFormat;
+	import flash.text.TextFormatAlign;
 	import flash.utils.Timer;
 	
 	import net.ored.events.ORedEvent;
+	import net.ored.events.ORedNavEvent;
 	import net.ored.util.ORedUtils;
 	import net.ored.util.out.Out;
 	
@@ -45,41 +49,46 @@ package com.lenovative.controller
 		public function init():void{
 			
 			view = new Sprite();
+			view.visible = false;
 			
 			_timer = new Timer(__INTERVAL,3);
 			_timer.addEventListener(TimerEvent.TIMER, _onTimer);
 			_timer.addEventListener(TimerEvent.TIMER_COMPLETE, _onTimerComplete);
 			
+			//display text
 			_counter 					= new TextField();
 			_counter.defaultTextFormat 	= textFormat;
-			
-			//_counter.visible			= false;
-			_counter.x 					= _m.stageRef.fullScreenWidth/2 - _counter.width/2;
-			_counter.y 					= _m.stageRef.fullScreenHeight/2 - _counter.height/2;
+			_counter.autoSize			= TextFieldAutoSize.LEFT;
+			_counter.selectable			= false;
+			_counter.text 				= "Ready?";
+			_counter.visible 			= false;
 			view.addChild(_counter);
 			
+			//simulate camera flash by blinking screen white.
 			_glowSprite = ORedUtils.gimmeRectWithTransparency(_m.stageRef.fullScreenWidth, _m.stageRef.fullScreenHeight,0xffffff, 1);
 			_glowSprite.visible = false;
 			view.addChild(_glowSprite);
-		
+			
+			resize();
 		}
 
 
 		public function start():void{
 			Out.status(this, "start");
-			_reset();
-			_timer.start();
+			_counter.text = count;
+			TweenLite.delayedCall(1, _timer.start);
 		}
 		public function transitionIn():void{
 			Out.status(this, "transitionIn");
+			view.visible = true;
+			TweenLite.from(_counter,.7,{x:tweenFromX, autoAlpha:1, ease:Cubic.easeOut, onComplete:_onTransitionIn});
+			
 		}
 		public function transitionOut():void{
 			Out.status(this, "transitionOut");
+			dispatchEvent(new ORedNavEvent(Constants.FINISH));
 		}
-		public function resize():void{
-			
-		}
-		
+
 		// =================================================
 		// ================ Workers
 		// =================================================
@@ -88,18 +97,16 @@ package com.lenovative.controller
 		{
 			Out.status(this, "timerComplete");
 			dispatchEvent(new ORedEvent(Constants.CAPTURE_BITMAP, {index:_index}));
-			_glowSprite.alpha = 1;
-			_glowSprite.visible = true;
-			TweenLite.to(_glowSprite,.25,{autoAlpha:0});
+			_blinkFlash();
 			_index++;
 			if(_index < __MAX_PICS) {
 				_count 			= 3;
 				_counter.text 	= count;
 				_timer.reset();
 				_timer.start();
-			}else{
+			}else{	
 				_counter.visible = false;
-					
+				transitionOut();
 			}
 		}
 		
@@ -109,11 +116,21 @@ package com.lenovative.controller
 			_count--;
 			_counter.text = count;
 		}
+		protected function _blinkFlash():void{
+			//_glowSprite.x = 0;
+			_glowSprite.alpha = 1;
+			_glowSprite.visible = true;
+			TweenLite.to(_glowSprite,.25,{autoAlpha:0});
+		}
 		// =================================================
 		// ================ Handlers
 		// =================================================
 		private function _onComplete():void{
 			Out.status(this, "_onComplete");
+		}
+		private function _onTransitionIn():void{
+			Out.status(this, "_onTransistionIn():");
+			TweenLite.delayedCall(1, start);
 		}
 		private function _onTransitionOut():void{
 			
@@ -128,7 +145,7 @@ package com.lenovative.controller
 			textFormat.color 	= 0x0000ff; //coundown colors
 			textFormat.font 	= "Gotham";    
 			textFormat.size 	= 128;
-
+			textFormat.align 	= TextFormatAlign.CENTER;
 			
 			return textFormat;
 		}
@@ -137,17 +154,39 @@ package com.lenovative.controller
 		{
 			return String(_count);
 		}
-
+		private function get tweenFromX():Number{
+			var x:Number = _m.isFullScreen() ? _m.stageRef.fullScreenWidth : _m.stageRef.stageWidth;
+			return x + _counter.width;
+		}
 		// =================================================
 		// ================ Core Handler
 		// =================================================
-		private function _reset():void{
+		
+		public function reset():void{
 			_m.flushBitmaps();
 			_index			= 0;
 			_count 			= 3;
-			_counter.text	= count;
+			_counter.text	= "Ready?";
 			_counter.visible = true;
+			
+			resize();
 		}
+		public function resize():void{
+					
+			if(_m.isFullScreen()){
+				_glowSprite.width 	= _m.stageRef.fullScreenWidth;
+				_glowSprite.height	= _m.stageRef.fullScreenHeight;
+				_counter.x 			= _m.stageRef.fullScreenWidth/2;
+				_counter.y 			= _m.stageRef.fullScreenHeight/2 - _counter.height;
+			} else{
+				_glowSprite.width 	= _m.stageRef.stageWidth;
+				_glowSprite.height	= _m.stageRef.stageHeight;
+				_counter.x 			= _m.stageRef.stageWidth/2 - _counter.width/2;
+				_counter.y 			= _m.stageRef.stageHeight/2 - _counter.height;
+				
+			}
+		}
+		
 		// =================================================
 		// ================ Initialize
 		// =================================================
