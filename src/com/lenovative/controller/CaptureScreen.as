@@ -32,6 +32,7 @@ package com.lenovative.controller
 		
 		public var view:Sprite;
 		
+		private const __DELAY_START:int = 1;//second
 		private const __MAX_PICS:int = 4; 
 		private var _counter	:TextField;
 		private var _count		:int = 3;
@@ -75,13 +76,14 @@ package com.lenovative.controller
 
 		public function start():void{
 			Out.status(this, "start");
-			_counter.text = count;
+			_counter.text 	= count;
+			_counter.x 		= tweenToX;
 			TweenLite.delayedCall(1, _timer.start);
 		}
 		public function transitionIn():void{
 			Out.status(this, "transitionIn");
-			view.visible = true;
-			TweenLite.from(_counter,.7,{x:tweenFromX, autoAlpha:1, ease:Cubic.easeOut, onComplete:_onTransitionIn});
+			reset();
+			TweenLite.to(_counter,.8,{x:tweenToX, autoAlpha:1, ease:Cubic.easeOut, onComplete:_onTransitionIn});
 			
 		}
 		public function transitionOut():void{
@@ -93,6 +95,23 @@ package com.lenovative.controller
 		// ================ Workers
 		// =================================================
 		
+		
+		protected function _blinkFlash():void{
+			//_glowSprite.x = 0;
+			_glowSprite.alpha 		= 1;
+			_glowSprite.visible 	= true;
+			TweenLite.to(_glowSprite,.25,{autoAlpha:0});
+		}
+		// =================================================
+		// ================ Handlers
+		// =================================================
+		protected function _onTimer($e:TimerEvent):void
+		{
+			Out.status(this, "timer");
+			_count--;
+			_counter.text 	= count;
+			_counter.x 		= tweenToX;
+		}
 		protected function _onTimerComplete($e:TimerEvent):void
 		{
 			Out.status(this, "timerComplete");
@@ -109,28 +128,10 @@ package com.lenovative.controller
 				transitionOut();
 			}
 		}
-		
-		protected function _onTimer($e:TimerEvent):void
-		{
-			Out.status(this, "timer");
-			_count--;
-			_counter.text = count;
-		}
-		protected function _blinkFlash():void{
-			//_glowSprite.x = 0;
-			_glowSprite.alpha = 1;
-			_glowSprite.visible = true;
-			TweenLite.to(_glowSprite,.25,{autoAlpha:0});
-		}
-		// =================================================
-		// ================ Handlers
-		// =================================================
-		private function _onComplete():void{
-			Out.status(this, "_onComplete");
-		}
+
 		private function _onTransitionIn():void{
 			Out.status(this, "_onTransistionIn():");
-			TweenLite.delayedCall(1, start);
+			TweenLite.delayedCall(__DELAY_START, start);
 		}
 		private function _onTransitionOut():void{
 			
@@ -155,8 +156,12 @@ package com.lenovative.controller
 			return String(_count);
 		}
 		private function get tweenFromX():Number{
-			var x:Number = _m.isFullScreen() ? _m.stageRef.fullScreenWidth : _m.stageRef.stageWidth;
+			var x:Number = _m.isFullScreen() ? _m.stageRef.fullScreenWidth + _counter.width : _m.stageRef.stageWidth + _counter.width;
 			return x + _counter.width;
+		}
+		private function get tweenToX():Number{
+			var x:Number = _m.isFullScreen() ? _m.stageRef.fullScreenWidth/2 : _m.stageRef.stageWidth/2;
+			return x - _counter.width/2;
 		}
 		// =================================================
 		// ================ Core Handler
@@ -164,9 +169,11 @@ package com.lenovative.controller
 		
 		public function reset():void{
 			_m.flushBitmaps();
+			view.visible 	= true;
 			_index			= 0;
 			_count 			= 3;
 			_counter.text	= "Ready?";
+			_counter.x 		= tweenFromX;
 			_counter.visible = true;
 			
 			resize();

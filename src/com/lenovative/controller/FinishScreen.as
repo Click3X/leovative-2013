@@ -30,20 +30,28 @@ package com.lenovative.controller
 			
 			_m = Model.getInstance();
 			
-			view 			= new DisplayPhotoClip();
-			view.visible 	= false;
+			view 				= new DisplayPhotoClip();
+			view.visible 		= false;
 			
-			
+			photoContainer 		= new Sprite();
+			photoContainer.x	= Constants.picOffX;
+			photoContainer.y	= Constants.picOffY;
+			view.addChild(photoContainer);
+		
 			view.startOverBtn.addEventListener(MouseEvent.CLICK, _onStartOverClick);
+			
+			resize();
 		}
 		
 		public function transitionIn():void{
 			Out.status(this, "transitionIn");
-			view.visible = true;
+			reset();
+			photoContainer.addChild(_m.compositedImage);
+			TweenLite.to(view,.8,{x:tweenToX, autoAlpha:1, ease:Cubic.easeOut, onComplete:_onTransitionIn});
 		}
 		public function transitionOut():void{
 			Out.status(this, "transitionOut");
-			TweenLite.to(view,.7,{x:_m.stageRef.fullScreenWidth+view.width, autoAlpha:1, ease:Cubic.easeOut, onComplete:_onTransitionOut});
+			TweenLite.to(view,.7,{x:tweenFromX, autoAlpha:0, ease:Cubic.easeOut, onComplete:_onTransitionOut});
 		}
 		// =================================================
 		// ================ Workers
@@ -58,6 +66,10 @@ package com.lenovative.controller
 			transitionOut();
 		}
 		
+		protected function _onTransitionIn():void{
+			
+			Out.status(this, "_onTransitionIn");
+		}
 		protected function _onTransitionOut():void{
 			
 			dispatchEvent(new ORedNavEvent(Constants.START));
@@ -65,16 +77,33 @@ package com.lenovative.controller
 		// =================================================
 		// ================ Getters / Setters
 		// =================================================
-		
+		private function get tweenFromX():Number{
+			var x:Number = _m.isFullScreen() ? _m.stageRef.fullScreenWidth : _m.stageRef.stageWidth;
+			return x + view.width;
+		}
+		private function get tweenToX():Number{
+			var x:Number = _m.isFullScreen() ? _m.stageRef.fullScreenWidth/2 : _m.stageRef.stageWidth/2;
+			return x - view.width/2;
+		}
 		// =================================================
 		// ================ Core Handler
 		// =================================================
 		public function reset():void{
-			view.visible = false;
+			for(var i:int = 0; i< photoContainer.numChildren; i++)
+				photoContainer.removeChildAt(0);
+			view.x 			= tweenFromX;
+			view.visible 	= false;
 			resize();
 		}
 		public function resize():void{
-			
+			if(_m.isFullScreen()){
+				view.x = _m.stageRef.fullScreenWidth/2 - view.width/2;
+				view.y = _m.stageRef.fullScreenHeight/2 - view.height/2;
+			}else{
+				view.x = _m.stageRef.stageWidth/2 - view.width/2;
+				view.y = _m.stageRef.stageHeight/2 - view.height/2;
+				
+			}
 		}
 		// =================================================
 		// ================ Initialize

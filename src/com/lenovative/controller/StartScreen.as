@@ -37,11 +37,13 @@ package com.lenovative.controller
 		}
 		public function transitionIn():void{
 			Out.status(this, "transitionIn");
-			TweenLite.from(view,.7,{x:tweenFromX, autoAlpha:1, ease:Cubic.easeOut});
+			reset();
+			view.x = tweenFromX;
+			TweenLite.to(view,.7,{x:tweenToX, autoAlpha:1, ease:Cubic.easeOut});
 		}
 		public function transitionOut():void{
 			Out.status(this, "transitionOut");
-			TweenLite.to(view,.7,{x:tweenFromX, autoAlpha:1, ease:Cubic.easeOut, onComplete:_onTransitionOut});
+			TweenLite.to(view,.7,{x:tweenFromX, autoAlpha:0, ease:Cubic.easeOut, onComplete:_onTransitionOut});
 		
 		}
 		// =================================================
@@ -71,6 +73,10 @@ package com.lenovative.controller
 		private function get tweenFromX():Number{
 			var x:Number = _m.isFullScreen() ? _m.stageRef.fullScreenWidth : _m.stageRef.stageWidth;
 			return x + view.width;
+		}
+		private function get tweenToX():Number{
+			var x:Number = _m.isFullScreen() ? _m.stageRef.fullScreenWidth/2 : _m.stageRef.stageWidth/2;
+			return x - view.width/2;
 		}
 		// =================================================
 		// ================ Core Handler

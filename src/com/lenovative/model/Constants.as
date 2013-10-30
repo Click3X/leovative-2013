@@ -2,6 +2,8 @@ package com.lenovative.model
 {
 	public class Constants
 	{
+		public static const ROUTE		:String = "http://leovative.dev/save";
+		
 		public static const START		:String = "start";
 		public static const CAPTURE		:String = "capture";
 		public static const FINISH		:String = "finish";
@@ -17,6 +19,8 @@ package com.lenovative.model
 		public static const pic1Rect	:Array = [10, 10];
 		
 		public static const picOffX		:Number = 390; 
-		public static const picOffY		:Number = 320; 
+		public static const picOffY		:Number = 61; 
+		
+		public static const HASHTAGS	:Array = ["hashtag1", "hashtag2"];
 	}
 }

@@ -7,6 +7,7 @@ package
 	import com.lenovative.interfaces.IScreen;
 	import com.lenovative.model.Constants;
 	import com.lenovative.model.Model;
+	import com.lenovative.service.ExportBitmapService;
 	
 	import flash.display.Bitmap;
 	import flash.display.Sprite;
@@ -30,10 +31,13 @@ package
 		// =================================================
 		private var _m:Model;
 		public var oredCamera:ORedCamera;
+		private var _exporter:ExportBitmapService;
 		
+		//screens
 		private var _startScreen:StartScreen;
 		private var _captureScreen:CaptureScreen;
 		private var _finishScreen:FinishScreen;
+		
 		// =================================================
 		// ================ Public
 		// =================================================
@@ -49,6 +53,7 @@ package
 					_captureScreen.transitionIn();
 					break;
 				case Constants.FINISH:
+					//oc: now that we're on the last photo, create 4-up image 
 					_m.compositedImage 			= Compositor.getTiledImage(_m.curPics);
 					oredCamera.view.visible 	= false;
 					_finishScreen.transitionIn();
@@ -89,6 +94,7 @@ package
 			//finish screen
 			_finishScreen = new FinishScreen();
 			_finishScreen.init();
+			_finishScreen.view.saveBtn.addEventListener(MouseEvent.CLICK, _exportBitmap);
 			addChild(_finishScreen.view);
 			
 			//load screens into model
@@ -99,7 +105,13 @@ package
 			//listen for screen change event
 			for each (var s:IScreen in _m.screens) s.addEventListener(ORedNavEvent.SCREEN_CHANGE, screenChange);
 		}
-
+		
+		protected function _exportBitmap($e:MouseEvent):void
+		{
+			Out.status(this, "_exportBitmap");
+			_exporter.export(_m.compositedImage.bitmapData, _m.twitterHandle, _m.twitterHashtag);
+		}
+		
 		// =================================================
 		// ================ Handlers
 		// =================================================
@@ -127,15 +139,6 @@ package
 			var img:Bitmap = oredCamera.takeSnapshot(stage.fullScreenWidth, stage.fullScreenHeight);
 			_m.curPics.push(img);
 			
-			//oc: now that we're on the last photo, create 4-up image 
-			if($e.payload.index == 3) {
-				
-				//oc: make call with 
-					//_controls.view.tf.text; 
-					// Base64 encoded byte array 
-				
-			//	addChild(_m.compositedImage);
-			}
 		}
 		// =================================================
 		// ================ Getters / Setters
@@ -166,7 +169,7 @@ package
 			//prepare display objects
 			_createChildren();
 			_createCamera();
-
+			_exporter = new ExportBitmapService();
 		}
 	
 
