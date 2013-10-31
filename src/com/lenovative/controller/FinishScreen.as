@@ -1,11 +1,11 @@
 package com.lenovative.controller
 {
-	import com.greensock.TweenLite;
-	import com.greensock.easing.Cubic;
 	import com.lenovative.interfaces.IScreen;
 	import com.lenovative.model.Constants;
 	import com.lenovative.model.Model;
 	
+	import flash.display.Bitmap;
+	import flash.display.DisplayObject;
 	import flash.display.Sprite;
 	import flash.events.EventDispatcher;
 	import flash.events.MouseEvent;
@@ -18,7 +18,6 @@ package com.lenovative.controller
 		private var _m:Model;
 		
 		public var view:DisplayPhotoClip;
-		public var photoContainer:Sprite;
 		// =================================================
 		// ================ Instance Vars
 		// =================================================
@@ -27,32 +26,48 @@ package com.lenovative.controller
 		// ================ Public
 		// =================================================
 		public function init():void{
-			
 			_m = Model.getInstance();
 			
 			view 				= new DisplayPhotoClip();
 			view.visible 		= false;
 			
-			photoContainer 		= new Sprite();
-			photoContainer.x	= Constants.picOffX;
-			photoContainer.y	= Constants.picOffY;
-			view.addChild(photoContainer);
-		
 			view.startOverBtn.addEventListener(MouseEvent.CLICK, _onStartOverClick);
 			
 			resize();
 		}
 		
+		public function addPhoto(_image:Bitmap, _bitmaps:Vector.<Bitmap>):void{
+			removePhoto();
+			view.photo_container.addChild(_image);
+			
+			var seq:ImageSequence = new ImageSequence(_bitmaps,100);
+			seq.x = Constants.SIDE_LENGTH+(Constants.GUTTER);
+			view.photo_container.addChild(seq);
+			seq.play();
+		}
+		
+		public function removePhoto():void{
+			while( view.photo_container.numChildren > 0 ){
+				var c:DisplayObject = view.photo_container.getChildAt(0);
+				if(c is ImageSequence){
+					ImageSequence(c).destroy();
+				}
+				view.photo_container.removeChild(c);
+			}
+		}
+		
 		public function transitionIn():void{
 			Out.status(this, "transitionIn");
-			reset();
-			photoContainer.addChild(_m.compositedImage);
-			TweenLite.to(view,.8,{x:tweenToX, autoAlpha:1, ease:Cubic.easeOut, onComplete:_onTransitionIn});
+			
+			view.visible 	= true;
 		}
+		
 		public function transitionOut():void{
 			Out.status(this, "transitionOut");
-			TweenLite.to(view,.7,{x:tweenFromX, autoAlpha:0, ease:Cubic.easeOut, onComplete:_onTransitionOut});
+			
+			view.visible 	= false;
 		}
+		
 		// =================================================
 		// ================ Workers
 		// =================================================
@@ -63,52 +78,29 @@ package com.lenovative.controller
 		protected function _onStartOverClick($e:MouseEvent):void
 		{
 			Out.status(this, "_onStartOverClick");		
-			transitionOut();
-		}
-		
-		protected function _onTransitionIn():void{
-			
-			Out.status(this, "_onTransitionIn");
-		}
-		protected function _onTransitionOut():void{
 			
 			dispatchEvent(new ORedNavEvent(Constants.START));
 		}
+		
 		// =================================================
 		// ================ Getters / Setters
 		// =================================================
-		private function get tweenFromX():Number{
-			var x:Number = _m.isFullScreen() ? _m.stageRef.fullScreenWidth : _m.stageRef.stageWidth;
-			return x + view.width;
-		}
-		private function get tweenToX():Number{
-			var x:Number = _m.isFullScreen() ? _m.stageRef.fullScreenWidth/2 : _m.stageRef.stageWidth/2;
-			return x - view.width/2;
-		}
+		
 		// =================================================
 		// ================ Core Handler
 		// =================================================
 		public function reset():void{
-			for(var i:int = 0; i< photoContainer.numChildren; i++)
-				photoContainer.removeChildAt(0);
-			view.x 			= tweenFromX;
-			view.visible 	= false;
+			removePhoto();
+			
 			resize();
 		}
+		
 		public function resize():void{
-			if(_m.isFullScreen()){
-				view.x = _m.stageRef.fullScreenWidth/2 - view.width/2;
-				view.y = _m.stageRef.fullScreenHeight/2 - view.height/2;
-			}else{
-				view.x = _m.stageRef.stageWidth/2 - view.width/2;
-				view.y = _m.stageRef.stageHeight/2 - view.height/2;
-				
-			}
+			view.x = _m.stageRef.stageWidth/2 - view.width/2;
+			view.y = _m.stageRef.stageHeight/2 - view.height/2;
 		}
 		// =================================================
 		// ================ Initialize
 		// =================================================
-
-
 	}
 }

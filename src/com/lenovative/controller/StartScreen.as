@@ -30,21 +30,21 @@ package com.lenovative.controller
 			
 			view.startBtn.buttonMode = true;
 			view.startBtn.addEventListener(MouseEvent.CLICK, _handleStartClick);
-			
 			view.visible = false;
 			
 			resize();
 		}
+		
 		public function transitionIn():void{
 			Out.status(this, "transitionIn");
-			reset();
-			view.x = tweenFromX;
-			TweenLite.to(view,.7,{x:tweenToX, autoAlpha:1, ease:Cubic.easeOut});
+			
+			view.visible 	= true;
 		}
-		public function transitionOut():void{
-			Out.status(this, "transitionOut");
-			TweenLite.to(view,.7,{x:tweenFromX, autoAlpha:0, ease:Cubic.easeOut, onComplete:_onTransitionOut});
 		
+		public function transitionOut():void{
+			Out.status(this, "transitionOut");		
+			
+			view.visible 	= false;
 		}
 		// =================================================
 		// ================ Workers
@@ -53,48 +53,28 @@ package com.lenovative.controller
 		protected function _handleStartClick($me:MouseEvent):void
 		{
 			Out.status(this, "_handleStartClick");
-			transitionOut();
+			
+			dispatchEvent(new ORedNavEvent(Constants.CAPTURE));
 		}
 		// =================================================
 		// ================ Handlers
 		// =================================================
-		private function _onTransitionIn():void{
-			
-		}
-		private function _onTransitionOut():void{
-			_m.twitterHandle = view.tf.text;
-			view.visible = false;
-			dispatchEvent(new ORedNavEvent(Constants.CAPTURE));
-			
-		}
+		
 		// =================================================
 		// ================ Getters / Setters
 		// =================================================
-		private function get tweenFromX():Number{
-			var x:Number = _m.isFullScreen() ? _m.stageRef.fullScreenWidth : _m.stageRef.stageWidth;
-			return x + view.width;
-		}
-		private function get tweenToX():Number{
-			var x:Number = _m.isFullScreen() ? _m.stageRef.fullScreenWidth/2 : _m.stageRef.stageWidth/2;
-			return x - view.width/2;
-		}
 		// =================================================
 		// ================ Core Handler
 		// =================================================
-		public function resize():void{
-			if(_m.isFullScreen()){
-				view.x = _m.stageRef.fullScreenWidth/2 - view.width/2;
-				view.y = _m.stageRef.fullScreenHeight/2 - view.height;
-			}else{
-				view.x = _m.stageRef.stageWidth/2 - view.width/2;
-				view.y = _m.stageRef.stageHeight/2 - view.height;
-				
-			}
-		}
 		public function reset():void{
-			view.visible = false;
 			resize();
 		}
+		
+		public function resize():void{
+			view.x = _m.stageRef.stageWidth/2 - view.width/2;
+			view.y = _m.stageRef.stageHeight/2 - view.height/2;
+		}
+		
 		// =================================================
 		// ================ Constructor
 		// =================================================
@@ -102,8 +82,8 @@ package com.lenovative.controller
 		public function StartScreen(target:IEventDispatcher=null)
 		{
 			super(target);
-			view = new Controls();
 			
+			view = new Controls();
 		}
 	}
 }

@@ -7,6 +7,7 @@ package net.ored.media
 	import flash.display.PixelSnapping;
 	import flash.display.Sprite;
 	import flash.events.ActivityEvent;
+	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.events.StatusEvent;
 	import flash.geom.Matrix;
@@ -25,8 +26,11 @@ package net.ored.media
 		public static const USER_ACCEPTED_CAMERA	:String = "USER_ACCEPTED_CAMERA";
 		public static const CAMERA_IS_ACTIVATED		:String = "CAMERA_IS_ACTIVATED";
 		
-		private var _width			:Number;
-		private var _height			:Number;
+		private var _screenWidth			:Number;
+		private var _screenHeight			:Number;
+		
+		private var _cameraWidth			:Number;
+		private var _cameraHeight			:Number;
 		
 		private var _view			:Sprite;
 		private var cam				:Camera;
@@ -35,78 +39,87 @@ package net.ored.media
 		private var _aspectRatio	:Number;
 		
 		private var _liveArea:Sprite;
-		private var _scale:Number;
+		private var _isActive:Boolean = false;
+		
 		// =================================================
 		// ================ Callable
 		// =================================================
 		public function resize($w:Number, $h:Number):void{
 			Out.status(this,"resize");
-			Out.debug(this, "_liveArea.x: "+($w-$h)/2);
-			vid.width 			= $w;
-			vid.height 			= $h;
 			
-			_width 				= $w;
-			_height 			= $h;
+			_screenWidth = $w;
+			_screenHeight = $h;
 			
-			_liveArea.width 	= $h;
-			_liveArea.height 	= $h;
-			_liveArea.x 		= ($w-$h)/2;
+			_liveArea.width 	=
+			_liveArea.height 	= _screenHeight*.8;
+			_liveArea.x 		= (_screenWidth-_liveArea.width)/2;
+			_liveArea.y 		= (_screenHeight-_liveArea.height)/2;
 			
-			_scale  			= Constants.SIDE_LENGTH/$h;
-			Out.debug(this, "scale: "+_scale);
+			var _vidscale:Number = 1;
+			
+			_vidscale = _screenWidth/1920;
+			
+			if(1080*_vidscale < _screenHeight)
+				_vidscale = _screenHeight/1080;
+			
+			var nvw:Number = _vidscale*1920;
+			var nvh:Number = _vidscale*1080;
+			
+			vid.mask = _liveArea;
+			
+			vid.scaleX = _vidscale*-1;
+			vid.scaleY = _vidscale;
+			
+			vid.y = (_screenHeight-nvh)/2;
+			vid.x = ((_screenWidth-nvw)/2)+nvw;
+			
 		}
 		
-		public function takeSnapshot($w:Number, $h:Number):Bitmap{
+		public function takeSnapshot():Bitmap{
+			_liveArea.visible = false;
+			
 			Out.status(this, "takeSnapshot");
+			
+			var _scale:Number = Constants.SIDE_LENGTH/_liveArea.width;
 			
 			//crop using the matrix and cropRect
 			var matrix:Matrix = new Matrix();
 			matrix.translate(- _liveArea.x, -_liveArea.y);
-			var cropSquare:Rectangle = new Rectangle(0,0,_liveArea.width,_liveArea.height);
+			matrix.scale(_scale,_scale);
 			
-			//scale down to the proper final cropped size
-			var scale:Number = Constants.SIDE_LENGTH/$h;
+			var cropSquare:Rectangle = new Rectangle(0,0,Constants.SIDE_LENGTH,Constants.SIDE_LENGTH);
 			
-			var bmd:BitmapData = new BitmapData(_liveArea.width, _liveArea.height, false, Math.random() * 0xFFFFFF);
-			bmd.draw(vid, matrix, null, null, cropSquare, true);//oc: last true for smoothing
+			var bmd:BitmapData = new BitmapData(Constants.SIDE_LENGTH, Constants.SIDE_LENGTH, false, Math.random() * 0xFFFFFF);
+			bmd.draw(view, matrix, null, null, cropSquare, true);
 			
-			var img:Bitmap = new Bitmap(scaleBitmapData(bmd, scale), PixelSnapping.AUTO,true);
-			//img.y = 100;
-			//view.addChild(img);
+			var img:Bitmap = new Bitmap(bmd, PixelSnapping.AUTO, true);
+			
+			_liveArea.visible = true;
+			
 			return img;
-			
 		}
-		
-		private function scaleBitmapData(bitmapData:BitmapData, scale:Number):BitmapData {
-			scale 					= Math.abs(scale);
-			var width:int 			= (bitmapData.width * scale) || 1;
-			var height:int 			= (bitmapData.height * scale) || 1;
-			var transparent:Boolean = bitmapData.transparent;
-			var result:BitmapData 	= new BitmapData(width, height, transparent);
-			var matrix:Matrix 		= new Matrix();
-			matrix.scale(scale, scale);
-			result.draw(bitmapData, matrix);
-			return result;
-		}
-
 		
 		public function connectCamera():void {
 			Out.status(this, "connectCamera");
 			Out.debug(this, "cam.w: "+cam.width+", cam.h: "+cam.height);
-			if (vid) 
-				if (view.contains(vid)) view.removeChild(vid);
-			cam.setMode(_width, _height, 24); 
-			vid 			= new Video(_width, _height);
+			
+			if(vid) 
+				if(view.contains(vid)) view.removeChild(vid);
+			
+			vid 			= new Video(_cameraWidth, _cameraHeight);
+			vid.scaleX = -1;
 			vid.visible		= true;
 			vid.attachCamera(cam);
 			view.addChild(vid);    
 			cam.addEventListener(ActivityEvent.ACTIVITY, checkActivity, false, 0, true);
 			
 			//live area
-			_liveArea = ORedUtils.gimmeRectWithTransparency(_height,_height, 0x00ffff, .2);
-			_liveArea.x = (_width-_height)/2;
+			_liveArea = ORedUtils.gimmeRectWithTransparency(_screenHeight*8,_screenHeight*8, 0x00ffff, .2);
+			_liveArea.x 		= (_screenWidth-_liveArea.width)/2;
+			_liveArea.y 		= (_screenHeight-_liveArea.height)/2;
 			_view.addChild(_liveArea);
 		}
+		
 		public function init():void{
 			Out.status(this, "init");
 			view 	= new Sprite();
@@ -117,17 +130,19 @@ package net.ored.media
 				isAvailable = false;
 				dispatchEvent(new ORedEvent(USER_DENIED_CAMERA)); 
 			} else {
-				_aspectRatio = cam.width/cam.height;
+				cam.setMode(_cameraWidth,_cameraHeight,40);
 				
 				Out.debug(this, "cam.w: "+cam.width+", cam.h: "+cam.height);
-				var standard:Number = 4/3;
-				standard == _aspectRatio ? Out.info("webcam is Standard def") : Out.info("webcam is WIDE SCREEN");
-				//oc: NOT YET, we still need user's permission!! isAvailable = true;
 				cam.addEventListener(StatusEvent.STATUS, _statusHandler); 
 			}
 			
-
+			//view.addEventListener(Event.ENTER_FRAME, onFrame);
 		}
+		
+		private function onFrame(e:Event):void{
+			//Out.status(this, "onFrame: ", vid.videoWidth);
+		}
+		
 		// =================================================
 		// ================ Workers
 		// =================================================
@@ -138,7 +153,8 @@ package net.ored.media
 		// =================================================
 		private function _statusHandler($e:StatusEvent):void 
 		{ 
-			Out.warning(this, "_statusHandler");
+			Out.warning(this, "_statusHandler",$e.code);
+			
 			switch ($e.code) 
 			{ 
 				case "Camera.Muted": 
@@ -155,7 +171,10 @@ package net.ored.media
 		}
 		
 		private function checkActivity($e:ActivityEvent):void{
-			dispatchEvent(new ORedEvent(CAMERA_IS_ACTIVATED));
+			if(!_isActive){
+				_isActive = true;
+				dispatchEvent(new ORedEvent(CAMERA_IS_ACTIVATED));
+			}
 		}
 
 		// =================================================
@@ -185,7 +204,6 @@ package net.ored.media
 			_isAvailable = value;
 		}
 		
-		
 		// =================================================
 		// ================ Interfaced
 		// =================================================
@@ -194,16 +212,24 @@ package net.ored.media
 		// ================ Core Handler
 		// =================================================
 		public function dispose():void{
-			if(cam.hasEventListener(StatusEvent.STATUS))	cam.removeEventListener(StatusEvent.STATUS, _statusHandler); 
-			if(cam.hasEventListener(ActivityEvent.ACTIVITY))	cam.removeEventListener(ActivityEvent.ACTIVITY, checkActivity);
+			if(cam.hasEventListener(StatusEvent.STATUS))	
+				cam.removeEventListener(StatusEvent.STATUS, _statusHandler); 
+			
+			if(cam.hasEventListener(ActivityEvent.ACTIVITY))	
+				cam.removeEventListener(ActivityEvent.ACTIVITY, checkActivity);
+			
 			if(isAvailable){
 				vid.attachCamera(null);
 				vid.clear();
 				view.removeChild(vid);
 				cam = null;
 			}
+			
+			_isActive = false;
+			
 			view = null;
 		}
+		
 		// =================================================
 		// ================ Overrides
 		// =================================================
@@ -211,11 +237,10 @@ package net.ored.media
 		// =================================================
 		// ================ Constructor
 		// =================================================
-
 		public function ORedCamera($w:Number, $h:Number)
 		{
-			_width 	= $w;
-			_height = $h;
+			_cameraWidth 	= _screenWidth 		= $w;
+			_cameraHeight 	= _screenHeight 	= $h;
 		}
 	}
 }

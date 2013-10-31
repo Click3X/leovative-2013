@@ -12,9 +12,8 @@ package
 	import flash.display.Bitmap;
 	import flash.display.Sprite;
 	import flash.display.StageAlign;
-	import flash.display.StageDisplayState;
 	import flash.display.StageScaleMode;
-	import flash.events.FullScreenEvent;
+	import flash.events.Event;
 	import flash.events.MouseEvent;
 	
 	import net.ored.events.ORedEvent;
@@ -23,7 +22,7 @@ package
 	import net.ored.util.ORedUtils;
 	import net.ored.util.out.Out;
 	
-	[SWF(backgroundColor="#ff0000", frameRate="30", quality="HIGH")]
+	[SWF(backgroundColor="#FFFFFF", frameRate="40", quality="HIGHEST")]
 	public class Lenovative extends Sprite
 	{
 		// =================================================
@@ -43,32 +42,50 @@ package
 		// =================================================
 		protected function screenChange($e:ORedNavEvent):void{
 			Out.info(this, "screenChange: " +$e.screen);
+			
 			switch($e.screen){
 				case Constants.START: 
 					oredCamera.view.visible = false;
+					
+					_finishScreen.transitionOut();
+					_captureScreen.transitionOut();
+					
 					_startScreen.transitionIn();
 					break;
 				case Constants.CAPTURE: 
 					oredCamera.view.visible = true;
+					
+					_finishScreen.transitionOut();
+					_startScreen.transitionOut();
+					
 					_captureScreen.transitionIn();
 					break;
 				case Constants.FINISH:
-					//oc: now that we're on the last photo, create 4-up image 
-					_m.compositedImage 			= Compositor.getTiledImage(_m.curPics);
+					//oc: create 4-up image 
+					_m.compositedImage 	= Compositor.getTiledImage(_m.curPics);
+					
+					_finishScreen.addPhoto(_m.compositedImage, _m.curPics);
+					
 					oredCamera.view.visible 	= false;
+					
+					_captureScreen.transitionOut();
+					_startScreen.transitionOut();
+					
 					_finishScreen.transitionIn();
 					break;
 			}
 		}
+		
 		// =================================================
 		// ================ Workers
 		// =================================================
 		private function _createCamera():void
 		{
-			oredCamera = new ORedCamera(stage.stageWidth,stage.stageHeight);
+			oredCamera = new ORedCamera(1920,1080);
 			oredCamera.init();
 			oredCamera.connectCamera();
-			oredCamera.addEventListener(ORedCamera.USER_ACCEPTED_CAMERA, _startApp);
+			oredCamera.addEventListener(ORedCamera.CAMERA_IS_ACTIVATED, _cameraReady)
+			
 			//oc: hide camera initially
 			oredCamera.view.visible = false;
 			addChildAt(oredCamera.view,0);
@@ -76,15 +93,11 @@ package
 		
 		private function _createChildren():void
 		{
-			
 			//start screen
 			_startScreen = new StartScreen();
 			_startScreen.init();
 			addChild(_startScreen.view);
 
-			//full screen button
-			_startScreen.view.fsBtn.addEventListener(MouseEvent.CLICK, _enterFullScreen);
-				
 			//capture screen
 			_captureScreen = new CaptureScreen();
 			_captureScreen.addEventListener(Constants.CAPTURE_BITMAP, _captureBitmap);
@@ -112,34 +125,29 @@ package
 			_exporter.export(_m.compositedImage.bitmapData, _m.twitterHandle, _m.twitterHashtag);
 		}
 		
-		// =================================================
-		// ================ Handlers
-		// =================================================
-		protected function _startApp($e:ORedEvent):void{
-			//start the app.
+		protected function _cameraReady($e:ORedEvent):void{
 			_startScreen.transitionIn();
 		}
 
-		protected function _enterFullScreen(event:MouseEvent):void
+		protected function _onResize($e:Event = null):void
 		{
-			stage.displayState = StageDisplayState.FULL_SCREEN; 
-		}
-		
-		protected function _onFullScreenChange($e:FullScreenEvent):void
-		{
-			Out.status(this, "_onFullScreenChange: "+ $e.fullScreen);
-			oredCamera.resize(stage.fullScreenWidth, stage.fullScreenHeight);
-			oredCamera.connectCamera();
+			Out.status(this, "_onResize");
+			
+			_m.stageRef.stageWidth = stage.stageWidth;
+			_m.stageRef.stageHeight	= stage.stageHeight;
+				
+			oredCamera.resize(_m.stageRef.stageWidth, _m.stageRef.stageHeight);
 			
 			for each(var s:IScreen in _m.screens) s.resize();
 		}	
 
 		protected function _captureBitmap($e:ORedEvent):void{
 			Out.status(this, "_captureBitmap: index: "+ $e.payload.index);
-			var img:Bitmap = oredCamera.takeSnapshot(stage.fullScreenWidth, stage.fullScreenHeight);
-			_m.curPics.push(img);
 			
+			var img:Bitmap = oredCamera.takeSnapshot();
+			_m.curPics.push(img);
 		}
+		
 		// =================================================
 		// ================ Getters / Setters
 		// =================================================
@@ -160,7 +168,6 @@ package
 			//config stage
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			stage.align		= StageAlign.TOP_LEFT;
-			stage.addEventListener(FullScreenEvent.FULL_SCREEN, _onFullScreenChange);
 			
 			//model
 			_m 				= Model.getInstance();
@@ -170,9 +177,9 @@ package
 			_createChildren();
 			_createCamera();
 			_exporter = new ExportBitmapService();
+			
+			_onResize();
+			stage.addEventListener(Event.RESIZE, _onResize, false, 0, true);
 		}
-	
-
-
 	}
 }
