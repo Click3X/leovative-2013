@@ -2,9 +2,8 @@ package com.lenovative.controller
 {
 	import com.greensock.TimelineLite;
 	import com.greensock.TweenLite;
+	import com.greensock.TweenMax;
 	import com.greensock.easing.Cubic;
-	import com.greensock.plugins.AutoAlphaPlugin;
-	import com.greensock.plugins.TweenPlugin;
 	import com.lenovative.interfaces.IScreen;
 	import com.lenovative.model.Constants;
 	import com.lenovative.model.Model;
@@ -12,15 +11,11 @@ package com.lenovative.controller
 	import flash.display.Sprite;
 	import flash.events.EventDispatcher;
 	import flash.events.TimerEvent;
-	import flash.text.TextField;
-	import flash.text.TextFieldAutoSize;
-	import flash.text.TextFormat;
-	import flash.text.TextFormatAlign;
 	import flash.utils.Timer;
 	
 	import net.ored.events.ORedEvent;
 	import net.ored.events.ORedNavEvent;
-	import net.ored.util.ORedUtils;
+	import net.ored.media.ORedCamera;
 	import net.ored.util.out.Out;
 	
 	public class CaptureScreen extends EventDispatcher implements IScreen
@@ -28,38 +23,42 @@ package com.lenovative.controller
 		// =================================================
 		// ================ Instance Vars
 		// =================================================
-		private var _m:Model = Model.getInstance();
-		
-		public var view:Sprite;
-		
-		private const __DELAY_START:int = 1;//second
+		private const __DELAY_START:Number = .3;//second
+		private const __INTERVAL:Number = 500;
 		private const __MAX_PICS:int = 4; 
 		
-		private var _counter	:TextField;
-		private var _count		:int = 3;
-		private var _index		:int = 0;
-		private var _glowSprite	:Sprite;
+		private var _m:Model = Model.getInstance();
 		
-		private var _timer		:Timer;
-		private const __INTERVAL:Number = 400;
-		private var _sequencer	:TimelineLite;
+		public var view					:Sprite;
+		private var _camera_container	:Sprite;
+		private var _glowSprite			:Sprite;
+		private var _counter			:TimerDIsplay;
+		private var _index				:int = 0;
+		
+		private var _timer				:Timer;
+		private var _sequencer			:TimelineLite;
+		
+		private var _heading:ScreenHeading;
 		
 		// =================================================
 		// ================ Public
 		// =================================================
 		public function init():void{
-			view = new Sprite();
-			view.visible = false;
+			_createChildren();
+			resize();
+		}
+		
+		private function _createChildren():void{
+			_heading = new ScreenHeading("Preparing camera...\nGet ready.");
+			view.addChild(_heading);
 			
-			_timer = new Timer(__INTERVAL,3);
-			_timer.addEventListener(TimerEvent.TIMER, _onTimer);
-			_timer.addEventListener(TimerEvent.TIMER_COMPLETE, _onTimerComplete);
+			_m.camera = new ORedCamera(1920,1080);
+			_m.camera.addEventListener(ORedCamera.CAMERA_IS_ACTIVATED, _cameraReady);
+			
+			view.addChild(_m.camera.view);
 			
 			//display text
-			_counter 					= new TextField();
-			_counter.defaultTextFormat 	= textFormat;
-			_counter.selectable			= false;
-			_counter.embedFonts = true;
+			_counter 					= new TimerDIsplay();
 			view.addChild(_counter);
 			
 			//simulate camera flash by blinking screen white.
@@ -68,11 +67,12 @@ package com.lenovative.controller
 			_glowSprite.graphics.drawRect(0,0,_m.stageRef.fullScreenWidth, _m.stageRef.fullScreenHeight);
 			_glowSprite.alpha = 0;
 			view.addChild(_glowSprite);
-			
-			resize();
 		}
-
 		
+		protected function _cameraReady($e:ORedEvent):void{
+			resize();
+			initStart(0);
+		}
 
 		// =================================================
 		// ================ Workers
@@ -81,7 +81,7 @@ package com.lenovative.controller
 		protected function _blinkFlash( $finished:Boolean ):void{
 			_glowSprite.alpha 		= 1;
 			
-			TweenLite.to(_glowSprite,.25,{alpha:0, onComplete:$finished ? _done : null});
+			TweenLite.to(_glowSprite,.2,{alpha:0, onComplete:$finished ? _done : initStart});
 		}
 		
 		// =================================================
@@ -91,86 +91,72 @@ package com.lenovative.controller
 		{
 			Out.status(this, "timer");
 			
-			_count--;
-			_counter.text 	= count;
+			if(_timer.currentCount <  _timer.repeatCount){
+				_counter._num.text 	= count;
+				_counter.scaleX = _counter.scaleY = 1;
+				_counter.alpha = .8;
+				_counter.visible = true;
 			
-			
+				TweenMax.from(_counter, .3, {scaleX:1.4, scaleY:1.4, alpha:.5});
+			}
 		}
 		
 		protected function _onTimerComplete($e:TimerEvent):void
 		{
 			Out.status(this, "timerComplete");
 			
-			dispatchEvent(new ORedEvent(Constants.CAPTURE_BITMAP, {index:_index}));
-			
 			_index++;
 			
-			resetCounter();
+			_blinkFlash( _index == __MAX_PICS );
 			
-			var _finished:Boolean = (_index == __MAX_PICS);
-			
-			if(!_finished) {
-				initStart(.2);
-			}
-			
-			_blinkFlash( _finished );
-		}
-		
-		private function resetCounter():void{
-			_count 			= 3;
-			_counter.text 	= count;
 			_counter.visible = false;
+			
+			_m.curPics.push( _m.camera.takeSnapshot() );
 		}
 
 		public function transitionIn():void{
-			Out.status(this, "_onTransistionIn():");
-			
-			view.visible = true;
-			
+			Out.status(this, "_onTransistionIn:");
 			reset();
 			
-			TweenLite.delayedCall(__DELAY_START, initStart,[1]);
+			view.visible = true;
+			view.x = 0;
+			
+			TweenMax.from(view, 1, {x:_m.stageRef.stageWidth, ease:Cubic.easeInOut, onComplete:_m.camera.connect});
 		}
 		
-		public function initStart(_delay:Number):void{
+		public function transitionOut():void{
+			Out.status(this, "_onTransistionOut:");
+			
+			TweenMax.to(view, 1, {x:-_m.stageRef.stageWidth, ease:Cubic.easeInOut, onComplete:transitionOutComplete});
+		}
+		
+		public function transitionOutComplete():void{
+			trace("transitionOutComplete");
+			_m.camera.disconnect();
+			view.visible = false;
+			_counter.visible = false;
+		}
+		
+		public function initStart(_delay:Number = .2):void{
 			Out.status(this, "start");
 			
-			TweenLite.delayedCall(_delay, start);
+			TweenMax.delayedCall( _delay, start );
 		}
 		
 		private function start():void{
 			_timer.reset();
 			_timer.start();
-			_counter.visible = true;
 		}
 		
 		private function _done():void{
 			_counter.visible = false;
 			
-			dispatchEvent(new ORedNavEvent(Constants.FINISH));
-		}
-		
-		public function transitionOut():void{
-			view.visible = false;
-		}
-		
-		// =================================================
-		// ================ Getters / Setters
-		// =================================================
-		public function get textFormat():TextFormat{
-			var tf:TextFormat = new TextFormat();
-			tf.bold 	= false; 
-			tf.color 	= 0x0000ff;
-			tf.font 	= new Gotham_Book().fontName;    
-			tf.size 	= 128;
-			tf.align	= TextFormatAlign.CENTER;
-			
-			return tf;
+			dispatchEvent(new ORedNavEvent(Constants.FINISH_SCREEN));
 		}
 		
 		public function get count():String
 		{
-			return String(_count);
+			return String(_timer.repeatCount-_timer.currentCount);
 		}
 		
 		// =================================================
@@ -178,29 +164,41 @@ package com.lenovative.controller
 		// =================================================
 		
 		public function reset():void{
+			view.visible = false;
+			
 			_m.flushBitmaps();
 			
 			_index			= 0;
 			
-			resetCounter();
-			
+			_counter.visible = false;
 			resize();
 		}
 		
 		public function resize():void{
+			_heading.x = (_m.stageRef.stageWidth-_heading.width)*.5;
+			_heading.y = (_m.stageRef.stageHeight*.5)-_heading.height;
+			
 			_glowSprite.width 	= _m.stageRef.stageWidth;
 			_glowSprite.height	= _m.stageRef.stageHeight;
 			
-			_counter.width 		= 	_m.stageRef.stageWidth;
-			_counter.y 			= (_m.stageRef.stageHeight - _counter.height)/2;
+			_counter.x 		= 	_m.stageRef.stageWidth/2;
+			_counter.y 		=  	_m.stageRef.stageHeight/2;
+			
+			_m.camera.resize(_m.stageRef.stageWidth, _m.stageRef.stageHeight);
 		}
 		
 		// =================================================
-		// ================ Initialize
+		// ================ Constructor
 		// =================================================
 
 		public function CaptureScreen()
 		{
+			view = new Sprite();
+			view.visible = false;
+			
+			_timer = new Timer(__INTERVAL,4);
+			_timer.addEventListener(TimerEvent.TIMER, _onTimer);
+			_timer.addEventListener(TimerEvent.TIMER_COMPLETE, _onTimerComplete);
 		}
 	}
 }

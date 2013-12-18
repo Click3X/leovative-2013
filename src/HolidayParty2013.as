@@ -7,35 +7,39 @@ package
 	import com.lenovative.interfaces.IScreen;
 	import com.lenovative.model.Constants;
 	import com.lenovative.model.Model;
-	import com.lenovative.service.ExportBitmapService;
 	
-	import flash.display.Bitmap;
+	import flash.display.LoaderInfo;
 	import flash.display.Sprite;
 	import flash.display.StageAlign;
 	import flash.display.StageScaleMode;
 	import flash.events.Event;
-	import flash.events.MouseEvent;
 	
-	import net.ored.events.ORedEvent;
 	import net.ored.events.ORedNavEvent;
-	import net.ored.media.ORedCamera;
 	import net.ored.util.ORedUtils;
 	import net.ored.util.out.Out;
 	
-	[SWF(backgroundColor="#FFFFFF", frameRate="40", quality="HIGHEST")]
-	public class Lenovative extends Sprite
+	[SWF(frameRate="30", quality="LOW")]
+	
+	public class HolidayParty2013 extends Sprite
 	{
 		// =================================================
 		// ================ Instance Vars
 		// =================================================
+		private var _params:Object;
+		
 		private var _m:Model;
-		public var oredCamera:ORedCamera;
-		private var _exporter:ExportBitmapService;
 		
 		//screens
 		private var _startScreen:StartScreen;
 		private var _captureScreen:CaptureScreen;
 		private var _finishScreen:FinishScreen;
+		
+		private var _lights:LightsClip;
+		private var _background:MainBackground;
+		private var _logo:CFMLogo;
+		
+		private var _currentScreen:IScreen;
+		private var _lastScreen:IScreen;
 		
 		// =================================================
 		// ================ Public
@@ -43,72 +47,54 @@ package
 		protected function screenChange($e:ORedNavEvent):void{
 			Out.info(this, "screenChange: " +$e.screen);
 			
+			if(_currentScreen){
+				_lastScreen = _currentScreen;
+			}
+			
 			switch($e.screen){
-				case Constants.START: 
-					oredCamera.view.visible = false;
-					
-					_finishScreen.transitionOut();
-					_captureScreen.transitionOut();
-					
-					_startScreen.transitionIn();
+				case Constants.START_SCREEN:
+					_currentScreen = _startScreen;
 					break;
-				case Constants.CAPTURE: 
-					oredCamera.view.visible = true;
-					
-					_finishScreen.transitionOut();
-					_startScreen.transitionOut();
-					
-					_captureScreen.transitionIn();
+				case Constants.CAPTURE_SCREEN: 	
+					_currentScreen = _captureScreen;
 					break;
-				case Constants.FINISH:
-					//oc: create 4-up image 
+				case Constants.FINISH_SCREEN:
+					_currentScreen = _finishScreen;
+					
 					_m.compositedImage 	= Compositor.getTiledImage(_m.curPics);
 					
 					_finishScreen.addPhoto(_m.compositedImage, _m.curPics);
-					
-					oredCamera.view.visible 	= false;
-					
-					_captureScreen.transitionOut();
-					_startScreen.transitionOut();
-					
-					_finishScreen.transitionIn();
 					break;
 			}
-		}
-		
-		// =================================================
-		// ================ Workers
-		// =================================================
-		private function _createCamera():void
-		{
-			oredCamera = new ORedCamera(1920,1080);
-			oredCamera.init();
-			oredCamera.connectCamera();
-			oredCamera.addEventListener(ORedCamera.CAMERA_IS_ACTIVATED, _cameraReady)
 			
-			//oc: hide camera initially
-			oredCamera.view.visible = false;
-			addChildAt(oredCamera.view,0);
+			if(_lastScreen) _lastScreen.transitionOut();
+			_currentScreen.transitionIn();
 		}
 		
 		private function _createChildren():void
 		{
+			//background
+			_background = new MainBackground();
+			addChild(_background);
+			
+			_lights = new LightsClip();
+			_lights.y = -40;
+			addChild(_lights);
+			
 			//start screen
 			_startScreen = new StartScreen();
-			_startScreen.init();
 			addChild(_startScreen.view);
+			_startScreen.init();
 
 			//capture screen
 			_captureScreen = new CaptureScreen();
-			_captureScreen.addEventListener(Constants.CAPTURE_BITMAP, _captureBitmap);
-			_captureScreen.init();
 			addChild(_captureScreen.view);
+			_captureScreen.init();
 			
 			//finish screen
 			_finishScreen = new FinishScreen();
-			_finishScreen.init();
-			_finishScreen.view.saveBtn.addEventListener(MouseEvent.CLICK, _exportBitmap);
 			addChild(_finishScreen.view);
+			_finishScreen.init();
 			
 			//load screens into model
 			_m.screens.push(_startScreen);
@@ -116,17 +102,8 @@ package
 			_m.screens.push(_finishScreen);	
 			
 			//listen for screen change event
-			for each (var s:IScreen in _m.screens) s.addEventListener(ORedNavEvent.SCREEN_CHANGE, screenChange);
-		}
-		
-		protected function _exportBitmap($e:MouseEvent):void
-		{
-			Out.status(this, "_exportBitmap");
-			_exporter.export(_m.compositedImage.bitmapData, _m.twitterHandle, _m.twitterHashtag);
-		}
-		
-		protected function _cameraReady($e:ORedEvent):void{
-			_startScreen.transitionIn();
+			for each (var s:IScreen in _m.screens) 
+				s.addEventListener(ORedNavEvent.SCREEN_CHANGE, screenChange);
 		}
 
 		protected function _onResize($e:Event = null):void
@@ -135,18 +112,21 @@ package
 			
 			_m.stageRef.stageWidth = stage.stageWidth;
 			_m.stageRef.stageHeight	= stage.stageHeight;
-				
-			oredCamera.resize(_m.stageRef.stageWidth, _m.stageRef.stageHeight);
 			
+			var bgscale:Number = stage.stageWidth/1920;
+			
+			if( (1080*bgscale) < stage.stageHeight )
+				bgscale = stage.stageHeight/1080;
+			
+			_lights.scaleX = _lights.scaleY = stage.stageWidth/999;
+			
+			_background.width = 1920*bgscale;
+			_background.height = 1080*bgscale;
+			_background.x = (stage.stageWidth-_background.width)*.5;
+			_background.y = (stage.stageHeight-_background.height)*.5;
+						
 			for each(var s:IScreen in _m.screens) s.resize();
 		}	
-
-		protected function _captureBitmap($e:ORedEvent):void{
-			Out.status(this, "_captureBitmap: index: "+ $e.payload.index);
-			
-			var img:Bitmap = oredCamera.takeSnapshot();
-			_m.curPics.push(img);
-		}
 		
 		// =================================================
 		// ================ Getters / Setters
@@ -159,11 +139,13 @@ package
 		// =================================================
 		// ================ Constructor
 		// =================================================
-		public function Lenovative()
+		public function HolidayParty2013()
 		{
+			_params = LoaderInfo(this.root.loaderInfo).parameters;
+			
 			//log
 			ORedUtils.turnOutOn();
-			Out.info(this, "Hello Lenovative");
+			Out.info(this, "Hello Leovative");
 			
 			//config stage
 			stage.scaleMode = StageScaleMode.NO_SCALE;
@@ -171,15 +153,16 @@ package
 			
 			//model
 			_m 				= Model.getInstance();
-			_m.init(stage);
+			_m.init(stage, _params);
 			
 			//prepare display objects
 			_createChildren();
-			_createCamera();
-			_exporter = new ExportBitmapService();
 			
 			_onResize();
 			stage.addEventListener(Event.RESIZE, _onResize, false, 0, true);
+			
+			_currentScreen = _startScreen;
+			_currentScreen.transitionIn();
 		}
 	}
 }

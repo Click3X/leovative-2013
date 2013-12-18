@@ -26,10 +26,12 @@ package com.lenovative.controller
 		override protected function get inputParams():CFM_TextFieldParams{
 			var p:CFM_TextFieldParams = new CFM_TextFieldParams();
 			p.type = TextFieldType.INPUT;
-			p.font = Constants.GOTHAM_BOOK;
-			p.size = 37;
-			p.width = 400;
+			p.font = Constants.GOTHAM_MEDIUM;
+			p.size = 60;
+			p.leading = 8;
+			p.width = 500;
 			p.color = 0x555555;
+			
 			return p;
 		}
 		
