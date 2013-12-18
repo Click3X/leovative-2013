@@ -7,7 +7,6 @@ package com.lenovative.model
 	import flash.display.StageDisplayState;
 	import flash.events.EventDispatcher;
 	
-	import net.ored.media.ORedCamera;
 	import net.ored.util.out.Out;
 	
 	public class Model extends EventDispatcher
@@ -22,50 +21,24 @@ package com.lenovative.model
 		private var _compositedImage		:Bitmap;
 		private var _screenIds				:Array = ["start","capture","finish"];
 		private var _screens				:Vector.<IScreen>;
-		private var _camera					:ORedCamera;
-		private var _params					:Object;
-		
 		// =================================================
 		// ================ Singleton
 		// =================================================
 		private static var __instance       :Model;
-
-		public function get params():Object
-		{
-			return _params;
-		}
-
-		public function set params(value:Object):void
-		{
-			_params = value;
-		}
-
-		public function get camera():ORedCamera
-		{
-			return _camera;
-		}
-
-		public function set camera(value:ORedCamera):void
-		{
-			_camera = value;
-		}
-
 		public static function getInstance():Model { return __instance || (__instance = new Model()); };
 		// =================================================
 		// ================ Public
 		// =================================================
-		public function init($stage:Stage, $params:Object):void{
+		public function init($stage:Stage):void{
 			stageRef 	= $stage;
 			_screens 	= new Vector.<IScreen>();
 			_curPics 	= new Vector.<Bitmap>();
-			_params		= $params;
 		}
 
 		public function flushBitmaps():void{
 			_curPics = null;
 			_curPics = new Vector.<Bitmap>();
 		}
-		
 		public function isFullScreen():Boolean{
 			return stageRef.displayState == StageDisplayState.FULL_SCREEN;
 		}

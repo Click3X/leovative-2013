@@ -1,20 +1,19 @@
 package com.lenovative.controller
 {
-	import com.cfm.core.events.CFM_NavigationEvent;
-	import com.greensock.TweenMax;
-	import com.greensock.easing.Cubic;
 	import com.lenovative.interfaces.IScreen;
 	import com.lenovative.model.Constants;
 	import com.lenovative.model.Model;
-	import com.lenovative.service.ExportBitmapService;
 	
 	import flash.display.Bitmap;
 	import flash.display.DisplayObject;
 	import flash.display.Sprite;
 	import flash.events.EventDispatcher;
+<<<<<<< HEAD
 	import flash.events.IEventDispatcher;
+=======
+	import flash.events.MouseEvent;
+>>>>>>> parent of 218d65c... init
 	
-	import net.ored.events.ORedEvent;
 	import net.ored.events.ORedNavEvent;
 	import net.ored.util.out.Out;
 	
@@ -22,6 +21,7 @@ package com.lenovative.controller
 	{
 		private var _m:Model;
 		
+<<<<<<< HEAD
 		public var view:Sprite;
 		
 		private var _photo_container:Sprite;
@@ -32,6 +32,9 @@ package com.lenovative.controller
 		
 		private var _exporter:ExportBitmapService;
 		
+=======
+		public var view:DisplayPhotoClip;
+>>>>>>> parent of 218d65c... init
 		// =================================================
 		// ================ Instance Vars
 		// =================================================
@@ -40,54 +43,61 @@ package com.lenovative.controller
 		// ================ Public
 		// =================================================
 		public function init():void{
-			_createChildren();
+			_m = Model.getInstance();
+			
+			view 				= new DisplayPhotoClip();
+			view.visible 		= false;
+			
+			view.startOverBtn.addEventListener(MouseEvent.CLICK, _onStartOverClick);
+			
 			resize();
 		}
 		
 		public function addPhoto(_image:Bitmap, _bitmaps:Vector.<Bitmap>):void{
 			removePhoto();
-			_photo_container.addChild(_image);
+			view.photo_container.addChild(_image);
 			
 			var seq:ImageSequence = new ImageSequence(_bitmaps,100);
-			seq.x = Constants.SIDE_LENGTH + 5;
-			_photo_container.addChild(seq);
+			seq.x = Constants.SIDE_LENGTH+(Constants.GUTTER);
+			view.photo_container.addChild(seq);
 			seq.play();
-			
-			_photo_container.graphics.clear();
-			_photo_container.graphics.lineStyle(6,0xFFFFFF,.8);
-			_photo_container.graphics.drawRect(-6,-6,_photo_container.width+12, _photo_container.height+12);
-				
-			resize();
 		}
 		
 		public function removePhoto():void{
-			while( _photo_container.numChildren > 0 ){
-				var c:DisplayObject = _photo_container.getChildAt(0);
+			while( view.photo_container.numChildren > 0 ){
+				var c:DisplayObject = view.photo_container.getChildAt(0);
 				if(c is ImageSequence){
 					ImageSequence(c).destroy();
 				}
-				_photo_container.removeChild(c);
+				view.photo_container.removeChild(c);
 			}
 		}
 		
 		public function transitionIn():void{
 			Out.status(this, "transitionIn");
 			
-			view.visible = true;
-			view.x = 0;
-			
-			TweenMax.from(view, 1, {x:_m.stageRef.stageWidth, ease:Cubic.easeInOut});
+			view.visible 	= true;
 		}
 		
 		public function transitionOut():void{
 			Out.status(this, "transitionOut");
-						
-			TweenMax.to(view, 1, {x:-_m.stageRef.stageWidth, ease:Cubic.easeInOut, onComplete:reset});
+			
+			view.visible 	= false;
 		}
 		
 		// =================================================
 		// ================ Workers
 		// =================================================
+		
+		// =================================================
+		// ================ Handlers
+		// =================================================
+		protected function _onStartOverClick($e:MouseEvent):void
+		{
+			Out.status(this, "_onStartOverClick");		
+			
+			dispatchEvent(new ORedNavEvent(Constants.START));
+		}
 		
 		// =================================================
 		// ================ Getters / Setters
@@ -97,24 +107,27 @@ package com.lenovative.controller
 		// ================ Core Handler
 		// =================================================
 		public function reset():void{
-			view.visible = false;
-			
 			removePhoto();
 			
 			resize();
 		}
 		
 		public function resize():void{
+<<<<<<< HEAD
 			//_heading.x = (_m.stageRef.stageWidth-_heading.width)*.5;
 			_photo_container.x = (_m.stageRef.stageWidth-_photo_container.width)*.5;
 			_navigation.x = (_m.stageRef.stageWidth-_navigation.width)*.5;
 			
 			view.y = (_m.stageRef.stageHeight-view.height)*.5;
+=======
+			view.x = _m.stageRef.stageWidth/2 - view.width/2;
+			view.y = _m.stageRef.stageHeight/2 - view.height/2;
+>>>>>>> parent of 218d65c... init
 		}
-	
 		// =================================================
-		// ================ Constructor
+		// ================ Initialize
 		// =================================================
+<<<<<<< HEAD
 		
 		public function FinishScreen(target:IEventDispatcher=null)
 		{
@@ -185,5 +198,7 @@ package com.lenovative.controller
 			
 			return nav.button;
 		}
+=======
+>>>>>>> parent of 218d65c... init
 	}
 }
