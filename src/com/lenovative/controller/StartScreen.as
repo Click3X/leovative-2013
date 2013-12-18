@@ -1,6 +1,10 @@
 package com.lenovative.controller
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+	import com.cfm.core.buttons.CFM_SimpleButton;
+>>>>>>> parent of 176dc20... flash updates
 	import com.greensock.TweenMax;
 =======
 	import com.greensock.TweenLite;
@@ -24,10 +28,15 @@ package com.lenovative.controller
 		// =================================================
 		private var _m:Model;
 <<<<<<< HEAD
+<<<<<<< HEAD
 	
+=======
+		
+>>>>>>> parent of 176dc20... flash updates
 		private var _cfm_logo:CFMLogo;
+		private var _leovative_logo:LeovativeLogo;
 		private var _input:FormField;
-		private var _heading:MainHeading;
+		private var _heading:ScreenHeading;
 		
 		public var view:Sprite; 
 =======
@@ -85,8 +94,14 @@ package com.lenovative.controller
 		
 		public function resize():void{
 <<<<<<< HEAD
+<<<<<<< HEAD
 			_heading.x = (_m.stageRef.stageWidth)*.5;
 			_cfm_logo.x = (_m.stageRef.stageWidth)*.5;
+=======
+			_heading.x = (_m.stageRef.stageWidth-_heading.width)*.5;
+			_cfm_logo.x = (_m.stageRef.stageWidth-_cfm_logo.width)*.5;
+			_leovative_logo.x = (_m.stageRef.stageWidth-_leovative_logo.width)*.5;
+>>>>>>> parent of 176dc20... flash updates
 			_input.x = ((_m.stageRef.stageWidth-_input.width)*.5) + 30;
 			
 			view.y = (_m.stageRef.stageHeight-view.height)*.4;
@@ -115,15 +130,20 @@ package com.lenovative.controller
 		{
 			_cfm_logo = new CFMLogo();
 			view.addChild(_cfm_logo);
-			_cfm_logo.y = 700-_cfm_logo.height;
+			_cfm_logo.filters = Constants.SHADOW_STYLE;
 			
-			_heading = new MainHeading();
-			_heading.y = 200;
-			view.addChild(_heading);
+			_heading = new ScreenHeading("TWITTER PHOTO BOOTH");
+			_heading.y = _cfm_logo.y + _cfm_logo.height + 80;
+			_heading.renderTo(view);
 			
 			_input = new FormField(0,false,false,false,"",true,true);
 			_input.y = _heading.y + _heading.height + 50;
 			_input.renderTo( view );
+			
+			_leovative_logo = new LeovativeLogo();
+			view.addChild(_leovative_logo);
+			_leovative_logo.y = 700-_leovative_logo.height;
+			_leovative_logo.filters = Constants.SHADOW_STYLE;
 			
 			_input.addEventListener("submit", _handleStartClick, false, 0, true);
 =======

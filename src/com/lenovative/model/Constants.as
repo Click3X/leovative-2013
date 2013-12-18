@@ -12,7 +12,10 @@ package com.lenovative.model
 		public static const SIDE_LENGTH	:Number = 500;
 		
 <<<<<<< HEAD
+<<<<<<< HEAD
 		public static const GOTHAM					:Font = new Gotham_Book();
+=======
+>>>>>>> parent of 176dc20... flash updates
 		public static const GOTHAM_BOOK				:Font = new Gotham_Book();
 		public static const GOTHAM_MEDIUM			:Font = new Gotham_Medium();
 =======

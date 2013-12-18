@@ -20,7 +20,7 @@ package
 	
 	[SWF(frameRate="30", quality="LOW")]
 	
-	public class HolidayParty2013 extends Sprite
+	public class Leovative extends Sprite
 	{
 		// =================================================
 		// ================ Instance Vars
@@ -34,7 +34,6 @@ package
 		private var _captureScreen:CaptureScreen;
 		private var _finishScreen:FinishScreen;
 		
-		private var _lights:LightsClip;
 		private var _background:MainBackground;
 		private var _logo:CFMLogo;
 		
@@ -77,10 +76,6 @@ package
 			_background = new MainBackground();
 			addChild(_background);
 			
-			_lights = new LightsClip();
-			_lights.y = -40;
-			addChild(_lights);
-			
 			//start screen
 			_startScreen = new StartScreen();
 			addChild(_startScreen.view);
@@ -118,8 +113,6 @@ package
 			if( (1080*bgscale) < stage.stageHeight )
 				bgscale = stage.stageHeight/1080;
 			
-			_lights.scaleX = _lights.scaleY = stage.stageWidth/999;
-			
 			_background.width = 1920*bgscale;
 			_background.height = 1080*bgscale;
 			_background.x = (stage.stageWidth-_background.width)*.5;
@@ -139,7 +132,7 @@ package
 		// =================================================
 		// ================ Constructor
 		// =================================================
-		public function HolidayParty2013()
+		public function Leovative()
 		{
 			_params = LoaderInfo(this.root.loaderInfo).parameters;
 			

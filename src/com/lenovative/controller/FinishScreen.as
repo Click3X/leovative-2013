@@ -7,12 +7,17 @@ package com.lenovative.controller
 	import flash.display.Bitmap;
 	import flash.display.DisplayObject;
 	import flash.display.Sprite;
+	import flash.events.Event;
 	import flash.events.EventDispatcher;
 <<<<<<< HEAD
 	import flash.events.IEventDispatcher;
+<<<<<<< HEAD
 =======
 	import flash.events.MouseEvent;
 >>>>>>> parent of 218d65c... init
+=======
+	import flash.external.ExternalInterface;
+>>>>>>> parent of 176dc20... flash updates
 	
 	import net.ored.events.ORedNavEvent;
 	import net.ored.util.out.Out;
@@ -28,7 +33,7 @@ package com.lenovative.controller
 		
 		private var _navigation:NavigationTemplate;
 		
-		//private var _heading:ScreenHeading;
+		private var _heading:ScreenHeading;
 		
 		private var _exporter:ExportBitmapService;
 		
@@ -114,7 +119,11 @@ package com.lenovative.controller
 		
 		public function resize():void{
 <<<<<<< HEAD
+<<<<<<< HEAD
 			//_heading.x = (_m.stageRef.stageWidth-_heading.width)*.5;
+=======
+			_heading.x = (_m.stageRef.stageWidth-_heading.width)*.5;
+>>>>>>> parent of 176dc20... flash updates
 			_photo_container.x = (_m.stageRef.stageWidth-_photo_container.width)*.5;
 			_navigation.x = (_m.stageRef.stageWidth-_navigation.width)*.5;
 			
@@ -147,17 +156,17 @@ package com.lenovative.controller
 		}
 		
 		private function _createChildren():void{
-//			_heading = new ScreenHeading("THAT LOOKS AMAZING!");
-//			_heading.renderTo(view);
-//			
+			_heading = new ScreenHeading("THAT LOOKS AMAZING!");
+			_heading.renderTo(view);
+			
 			_photo_container = new Sprite();
-			_photo_container.y = 40;
+			_photo_container.y = _heading.height + 30;
 			_photo_container.filters = Constants.SHADOW_STYLE;
 			view.addChild(_photo_container);
 			
 			_navigation = new NavigationTemplate(_button_list,false,false);
 			_navigation.renderTo(view);
-			_navigation.setProperties({y:720-_navigation.height});
+			_navigation.setProperties({y:700-_navigation.height});
 			_navigation.addEventListener(CFM_NavigationEvent.BUTTON_CLICKED,_onNavClicked);
 		}
 		
@@ -188,7 +197,7 @@ package com.lenovative.controller
 		private function get _button_list():XMLList{
 			var nav:XML = <navigation/>;
 			
-			var send		:XML = <button id='send' value='send'><label>Love It!</label></button>;
+			var send		:XML = <button id='send' value='send'><label>Tweet It!</label></button>;
 			var try_again	:XML = <button id='try_again' value='try_again'><label>Re-Take</label></button>;
 			var quit		:XML = <button id='quit' value='quit'><label>Start Over</label></button>;
 				
