@@ -44,7 +44,7 @@ package com.lenovative.controller
 			}
 			
 			var totalSize:Number = (Constants.SIDE_LENGTH*2)+Constants.GUTTER;
-			var bmd:BitmapData = new BitmapData( totalSize, totalSize,true,Math.random() * 0xFFFFFF);
+			var bmd:BitmapData = new BitmapData( totalSize, totalSize,true,0x00000000);
 			
 			bmd.draw(contactSheet);
 			var bitmap:Bitmap = new Bitmap(bmd);
