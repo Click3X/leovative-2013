@@ -15,6 +15,7 @@ package com.lenovative.model
 		public static const SIDE_LENGTH			:Number = 500;
 		public static const GUTTER				:Number = 12;
 		
+		public static const GOTHAM					:Font = new Gotham_Book();
 		public static const GOTHAM_BOOK				:Font = new Gotham_Book();
 		public static const GOTHAM_MEDIUM			:Font = new Gotham_Medium();
 		
